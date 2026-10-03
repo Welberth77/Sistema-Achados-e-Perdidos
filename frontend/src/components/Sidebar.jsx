@@ -11,15 +11,15 @@ const links = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-56 shrink-0 border-r bg-white p-4">
-      <div className="mb-6 text-xl font-bold">A&amp;P</div>
+    <aside className="flex w-56 shrink-0 flex-col border-r bg-white p-4">
+      <div className="mb-6 px-1 text-xl font-bold">A&amp;P</div>
       <nav className="flex flex-col gap-1">
         {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             className={({ isActive }) =>
-              `rounded px-3 py-2 text-sm ${
+              `rounded px-3 py-2 text-sm transition ${
                 isActive ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
               }`
             }
