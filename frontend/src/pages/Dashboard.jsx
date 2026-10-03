@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api.js';
 import CardEstatistica from '../components/CardEstatistica.jsx';
+import Button from '../components/Button.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 
-// Página inicial. Faz um ping no backend para validar a integração.
 export default function Dashboard() {
   const [status, setStatus] = useState('verificando...');
 
@@ -20,12 +21,20 @@ export default function Dashboard() {
         Status do backend: <span className="font-semibold">{status}</span>
       </p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <CardEstatistica titulo="Itens achados" valor="—" />
         <CardEstatistica titulo="Em custódia" valor="—" />
         <CardEstatistica titulo="Devolvidos" valor="—" />
         <CardEstatistica titulo="Casos em aberto" valor="—" />
         <CardEstatistica titulo="Casos encerrados" valor="—" />
+      </div>
+
+      {/* teste rápido dos componentes base */}
+      <div className="flex items-center gap-2">
+        <Button>Salvar</Button>
+        <Button variant="secondary">Cancelar</Button>
+        <Button variant="danger" loading>Excluir</Button>
+        <StatusBadge status="em_custodia" />
       </div>
     </div>
   );
