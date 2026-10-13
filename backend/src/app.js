@@ -1,4 +1,5 @@
-﻿import registradoresRouter from './routes/registradores.js';
+﻿import itensRouter from './routes/itens.js';
+import registradoresRouter from './routes/registradores.js';
 import authRouter, { autenticar } from './routes/auth.js';
 import express from 'express';
 import cors from 'cors';
@@ -17,6 +18,7 @@ app.use('/api/auth', authRouter);
 
 // As próximas rotas da API exigem autenticação.
 app.use('/api', autenticar);
+app.use('/api/itens', itensRouter);
 app.use('/api/registradores', registradoresRouter);
 
 // Rotas futuras:
