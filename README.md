@@ -5,40 +5,64 @@ Aplicação web para gestão de itens achados, custódia e devolução.
 - **Frontend:** React + Vite + Tailwind CSS + React Router
 - **Backend:** Node.js + Express (API REST, autenticação JWT)
 - **Banco:** PostgreSQL
+- **Infra:** Docker + Docker Compose
 
 ## Pré-requisitos
 
-- Node.js LTS (ver `.nvmrc` — use `nvm use`)
-- PostgreSQL instalado e rodando
+- [Docker](https://www.docker.com/) instalado e em execução (inclui o Docker Compose)
+- Node.js LTS (ver `.nvmrc` — use `nvm use`) — apenas para rodar o frontend
 - Git
 
 ## Como rodar
 
-Clone o repositório e configure cada app:
+O **banco** e o **backend** rodam em contêineres Docker. O **frontend** roda localmente.
 
-### Backend
+### 1. Banco + Backend (Docker)
+
+Na raiz do projeto:
+
 ```bash
-cd backend
-cp .env.example .env        # ajuste as variáveis
-npm install
-npm run dev                 # sobe em http://localhost:3000
+docker compose up -d        # sobe o PostgreSQL e o backend
+docker compose logs -f      # (opcional) acompanha os logs
 ```
+
+Na primeira subida, o banco é criado e os scripts de `db/init/` aplicam o schema e os
+dados iniciais automaticamente — não é preciso instalar PostgreSQL nem rodar nada à mão.
+
 Teste: `GET http://localhost:3000/api/health` deve responder `{ "status": "ok" }`.
 
-### Frontend
+Comandos úteis:
+```bash
+docker compose down         # para os contêineres (mantém os dados do banco)
+docker compose down -v      # para e APAGA o banco (reaplica schema/seed na próxima subida)
+docker compose build        # reconstrói a imagem do backend após mudar dependências
+```
+
+### 2. Frontend (local)
+
 ```bash
 cd frontend
-cp .env.example .env        # ajuste VITE_API_URL se necessário
+cp .env.example .env         # VITE_API_URL já aponta para http://localhost:3000/api
 npm install
-npm run dev                 # sobe em http://localhost:5173
+npm run dev                  # sobe em http://localhost:5173
 ```
+
+### Acesso inicial
+
+- **Banco:** `achados_perdidos` · usuário `app_achados` · senha `1234` · `localhost:5432`
+- **Login (admin):** e-mail `admin@achados.local` · senha `admin123`
+
+> Senhas são padrão de **desenvolvimento** — troque em produção.
 
 ## Estrutura
 
 ```
-achados-e-perdidos/
-├── frontend/   # React (Vite + Tailwind + Router)
-└── backend/    # Node + Express (API REST)
+Sistema-Achados-e-Perdidos/
+├── docker-compose.yml   # sobe banco + backend
+├── db/
+│   └── init/            # schema e seed aplicados na 1ª subida do banco
+├── frontend/            # React (Vite + Tailwind + Router)
+└── backend/             # Node + Express (API REST) + Dockerfile
 ```
 
 ## Convenções
