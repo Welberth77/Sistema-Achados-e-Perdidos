@@ -1,3 +1,5 @@
+﻿import registradoresRouter from './routes/registradores.js';
+import authRouter, { autenticar } from './routes/auth.js';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -11,6 +13,11 @@ app.use(morgan('dev'));
 
 // Rotas da API
 app.use('/api/health', healthRouter);
+app.use('/api/auth', authRouter);
+
+// As próximas rotas da API exigem autenticação.
+app.use('/api', autenticar);
+app.use('/api/registradores', registradoresRouter);
 
 // Rotas futuras:
 // app.use('/api/auth', authRouter);
