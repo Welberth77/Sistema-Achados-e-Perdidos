@@ -34,7 +34,7 @@ export default function Dashboard() {
         <Button>Salvar</Button>
         <Button variant="secondary">Cancelar</Button>
         <Button variant="danger" loading>Excluir</Button>
-        <StatusBadge status="em_custodia" />
+        <StatusBadge status="EM_CUSTODIA" />
       </div>
     </div>
   );

@@ -6,14 +6,15 @@ import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 
+// valores iguais ao enum itens_achados.status do banco
 const STATUS = [
   { value: '', label: 'Todos os status' },
-  { value: 'achado', label: 'Achado' },
-  { value: 'em_custodia', label: 'Em custódia' },
-  { value: 'devolvido', label: 'Devolvido' },
-  { value: 'descartado', label: 'Descartado' },
-  { value: 'doado', label: 'Doado' },
-  { value: 'expirado', label: 'Expirado' },
+  { value: 'RECEBIDO', label: 'Recebido' },
+  { value: 'EM_CUSTODIA', label: 'Em custódia' },
+  { value: 'EM_ANALISE', label: 'Em análise' },
+  { value: 'EM_DEVOLUCAO', label: 'Em devolução' },
+  { value: 'DEVOLVIDO', label: 'Devolvido' },
+  { value: 'DESCARTADO', label: 'Descartado' },
 ];
 
 export default function Itens() {
@@ -38,10 +39,11 @@ export default function Itens() {
   }, []);
 
   const colunas = [
-    { key: 'descricao', header: 'Descrição' },
-    { key: 'categoria', header: 'Categoria' },
-    { key: 'localAproximado', header: 'Local' },
-    { key: 'data', header: 'Data' },
+    { key: 'codigo', header: 'Código' },
+    { key: 'titulo', header: 'Título' },
+    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
+    { key: 'local_encontrado', header: 'Local' },
+    { key: 'data_encontrado', header: 'Data' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
   ];
 
@@ -55,7 +57,7 @@ export default function Itens() {
       <div className="mb-4 flex flex-wrap items-end gap-2">
         <div className="w-72">
           <Input
-            placeholder="Pesquisar por descrição ou categoria..."
+            placeholder="Pesquisar por título ou descrição..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && carregar()}
