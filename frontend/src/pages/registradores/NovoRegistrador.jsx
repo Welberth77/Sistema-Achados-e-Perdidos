@@ -4,11 +4,29 @@ import { criarRegistrador } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Button from '../../components/Button.jsx';
 
-const TIPOS = ['Portaria', 'Setor', 'Segurança', 'Outro'];
+// enums do banco
+const VINCULOS = ['ALUNO', 'DOCENTE', 'TERCEIRIZADO', 'SERVIDOR', 'OUTRO'];
+const VINCULO_LABEL = {
+  ALUNO: 'Aluno',
+  DOCENTE: 'Docente',
+  TERCEIRIZADO: 'Terceirizado',
+  SERVIDOR: 'Servidor',
+  OUTRO: 'Outro',
+};
+const TIPOS_DOC = ['CPF', 'RG', 'OUTRO'];
 
 export default function NovoRegistrador() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nome: '', identificacao: '', contato: '', tipo: TIPOS[0] });
+  const [form, setForm] = useState({
+    nome: '',
+    vinculo: VINCULOS[0],
+    matricula: '',
+    tipo_documento: TIPOS_DOC[0],
+    documento: '',
+    telefone: '',
+    email: '',
+    observacoes: '',
+  });
   const [erros, setErros] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
@@ -20,7 +38,7 @@ export default function NovoRegistrador() {
   function validar() {
     const e = {};
     if (!form.nome.trim()) e.nome = 'Informe o nome.';
-    if (!form.identificacao.trim()) e.identificacao = 'Informe a identificação.';
+    if (!form.vinculo) e.vinculo = 'Selecione o vínculo.';
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -34,7 +52,7 @@ export default function NovoRegistrador() {
       navigate('/registradores');
     } catch (err) {
       if (err.status === 409) {
-        setErros((prev) => ({ ...prev, identificacao: 'Esse registrador já existe.' }));
+        setErros((prev) => ({ ...prev, documento: 'Já existe um registrador com esse documento.' }));
       } else {
         setErroGeral('Não foi possível cadastrar. Tente novamente.');
       }
@@ -61,41 +79,73 @@ export default function NovoRegistrador() {
           error={erros.nome}
           onChange={(e) => set('nome', e.target.value)}
         />
-        <Input
-          label="Identificação"
-          required
-          value={form.identificacao}
-          error={erros.identificacao}
-          onChange={(e) => set('identificacao', e.target.value)}
-        />
-        <Input
-          label="Contato"
-          value={form.contato}
-          onChange={(e) => set('contato', e.target.value)}
-        />
+
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">Tipo</span>
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            Vínculo <span className="text-red-600">*</span>
+          </span>
           <select
             className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
-            value={form.tipo}
-            onChange={(e) => set('tipo', e.target.value)}
+            value={form.vinculo}
+            onChange={(e) => set('vinculo', e.target.value)}
           >
-            {TIPOS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
+            {VINCULOS.map((v) => (
+              <option key={v} value={v}>{VINCULO_LABEL[v]}</option>
             ))}
           </select>
         </label>
+
+        <Input
+          label="Matrícula / SIAPE"
+          value={form.matricula}
+          onChange={(e) => set('matricula', e.target.value)}
+        />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700">Tipo de documento</span>
+            <select
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+              value={form.tipo_documento}
+              onChange={(e) => set('tipo_documento', e.target.value)}
+            >
+              {TIPOS_DOC.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </label>
+          <Input
+            label="Documento"
+            value={form.documento}
+            error={erros.documento}
+            onChange={(e) => set('documento', e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            label="Telefone"
+            value={form.telefone}
+            onChange={(e) => set('telefone', e.target.value)}
+          />
+          <Input
+            label="E-mail"
+            type="email"
+            value={form.email}
+            onChange={(e) => set('email', e.target.value)}
+          />
+        </div>
+
+        <Input
+          label="Observações"
+          value={form.observacoes}
+          onChange={(e) => set('observacoes', e.target.value)}
+        />
       </div>
 
       <div className="mt-6 flex gap-2">
-        <Button onClick={salvar} loading={enviando}>
-          Cadastrar
-        </Button>
-        <Button variant="secondary" onClick={() => navigate('/registradores')}>
-          Cancelar
-        </Button>
+        <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
+        <Button variant="secondary" onClick={() => navigate('/registradores')}>Cancelar</Button>
       </div>
     </div>
   );
