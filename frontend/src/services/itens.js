@@ -1,27 +1,86 @@
 import api from './api.js';
 
-const USE_MOCK = true; // troque para false quando o backend entregar os endpoints
+// Enquanto o backend não entrega os endpoints, use o mock.
+// Quando estiver pronto, troque para false.
+const USE_MOCK = true;
 
+// item achado (campos do contrato/banco):
+// { id, codigo, titulo, descricao, categoria_id, cor, marca, local_encontrado,
+//   data_encontrado, registrador_id, status, foto_url, observacoes }
+// + objetos aninhados `categoria` e `registrador` para exibição (como no GET /itens).
+// status ∈ RECEBIDO | EM_CUSTODIA | EM_ANALISE | EM_DEVOLUCAO | DEVOLVIDO | DESCARTADO
 let mockData = [
-  { id: 1, descricao: 'Mochila preta', categoria: 'Acessórios', localAproximado: 'Biblioteca', data: '2026-10-01', hora: '14:30', caracteristicas: 'Marca X, com chaveiro', numeroSerie: '', status: 'em_custodia', registrador: 'Biblioteca Central' },
-  { id: 2, descricao: 'Celular Android', categoria: 'Eletrônicos', localAproximado: 'Quadra', data: '2026-10-02', hora: '09:10', caracteristicas: 'Capa azul', numeroSerie: 'SN-99281', status: 'achado', registrador: 'Recepção Bloco A' },
-  { id: 3, descricao: 'Garrafa térmica', categoria: 'Utensílios', localAproximado: 'Sala 203', data: '2026-09-28', hora: '16:00', caracteristicas: 'Inox, 500ml', numeroSerie: '', status: 'devolvido', registrador: 'Recepção Bloco A' },
+  {
+    id: 1,
+    codigo: 'ACH-2026-0001',
+    titulo: 'Mochila preta',
+    descricao: 'Marca X, com chaveiro',
+    categoria_id: 4,
+    categoria: { id: 4, nome: 'Acessórios' },
+    cor: 'Preta',
+    marca: 'X',
+    local_encontrado: 'Biblioteca',
+    data_encontrado: '2026-10-01',
+    registrador_id: 2,
+    registrador: { id: 2, nome: 'Maria Souza' },
+    status: 'EM_CUSTODIA',
+    foto_url: '',
+    observacoes: '',
+  },
+  {
+    id: 2,
+    codigo: 'ACH-2026-0002',
+    titulo: 'Celular Android',
+    descricao: 'Capa azul',
+    categoria_id: 1,
+    categoria: { id: 1, nome: 'Eletrônicos' },
+    cor: 'Azul',
+    marca: '',
+    local_encontrado: 'Quadra',
+    data_encontrado: '2026-10-02',
+    registrador_id: 1,
+    registrador: { id: 1, nome: 'João da Silva' },
+    status: 'RECEBIDO',
+    foto_url: '',
+    observacoes: 'Nº de série SN-99281',
+  },
+  {
+    id: 3,
+    codigo: 'ACH-2026-0003',
+    titulo: 'Garrafa térmica',
+    descricao: 'Inox, 500ml',
+    categoria_id: 7,
+    categoria: { id: 7, nome: 'Outros' },
+    cor: 'Prata',
+    marca: '',
+    local_encontrado: 'Sala 203',
+    data_encontrado: '2026-09-28',
+    registrador_id: 1,
+    registrador: { id: 1, nome: 'João da Silva' },
+    status: 'DEVOLVIDO',
+    foto_url: '',
+    observacoes: '',
+  },
 ];
 let nextId = 4;
+let nextCodigo = 4;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function listarItens({ q = '', status = '' } = {}) {
+export async function listarItens({ q = '', status = '', categoria_id = '' } = {}) {
   if (USE_MOCK) {
     await delay(300);
     const termo = q.trim().toLowerCase();
     return mockData.filter(
       (i) =>
-        (!termo || i.descricao.toLowerCase().includes(termo) || i.categoria.toLowerCase().includes(termo)) &&
-        (!status || i.status === status)
+        (!termo ||
+          i.titulo.toLowerCase().includes(termo) ||
+          (i.descricao || '').toLowerCase().includes(termo)) &&
+        (!status || i.status === status) &&
+        (!categoria_id || String(i.categoria_id) === String(categoria_id))
     );
   }
-  const { data } = await api.get('/itens', { params: { q, status } });
-  return data;
+  const { data } = await api.get('/itens', { params: { q, status, categoria_id } });
+  return data.data ?? data;
 }
 
 export async function obterItem(id) {
@@ -33,15 +92,28 @@ export async function obterItem(id) {
       err.status = 404;
       throw err;
     }
-    // simula dados extras da tela de detalhes
-    return {
-      ...item,
-      custodia: item.status === 'em_custodia' ? { setor: 'Biblioteca', sala: 'Acervo', prateleira: 'B-12', responsavel: 'Ana' } : null,
-      historico: [
-        { data: item.data, evento: 'Item cadastrado' },
-        ...(item.status === 'devolvido' ? [{ data: '2026-10-03', evento: 'Item devolvido ao proprietário' }] : []),
-      ],
-    };
+    // histórico de custódia (array), como no GET /itens/:id/custodias — mais recente primeiro
+    // custodia: { tipo, local_guarda, usuario, data_evento }
+    // tipo ∈ ENTRADA | TRANSFERENCIA | SAIDA
+    const custodias = [
+      {
+        id: 1,
+        tipo: 'ENTRADA',
+        local_guarda: 'Acervo B-12',
+        usuario: 'Ana',
+        data_evento: `${item.data_encontrado}T14:30:00`,
+      },
+    ];
+    if (item.status === 'DEVOLVIDO') {
+      custodias.unshift({
+        id: 2,
+        tipo: 'SAIDA',
+        local_guarda: 'Balcão de atendimento',
+        usuario: 'Ana',
+        data_evento: '2026-10-03T10:00:00',
+      });
+    }
+    return { ...item, custodias };
   }
   const { data } = await api.get(`/itens/${id}`);
   return data;
@@ -50,7 +122,15 @@ export async function obterItem(id) {
 export async function criarItem(payload) {
   if (USE_MOCK) {
     await delay(300);
-    const novo = { id: nextId++, status: 'achado', registrador: 'Sistema', ...payload };
+    const codigo = `ACH-2026-${String(nextCodigo++).padStart(4, '0')}`;
+    const novo = {
+      id: nextId++,
+      codigo,
+      status: 'RECEBIDO', // status inicial (o backend define isso)
+      foto_url: '',
+      observacoes: '',
+      ...payload,
+    };
     mockData.push(novo);
     return novo;
   }
