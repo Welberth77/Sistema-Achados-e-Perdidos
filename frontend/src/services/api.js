@@ -23,6 +23,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event('sessao-expirada'));
     }
 
+    error.status = error.response?.status;
     return Promise.reject(error);
   }
 );

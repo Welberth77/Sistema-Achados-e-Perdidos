@@ -3,6 +3,12 @@ import pool from '../db.js';
 
 const router = Router();
 
+function hojeNoBrasil() {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+  }).format(new Date());
+}
+
 function responderErro(res, status, code, message, details = []) {
   return res.status(status).json({
     error: { code, message, details },
@@ -197,10 +203,10 @@ router.post('/', async (req, res, next) => {
     erros.push({ campo: 'titulo', message: 'Informe o título.' });
   }
 
-  if (!dataValida(body.data_encontrado)) {
+  if (!dataValida(body.data_encontrado) || body.data_encontrado > hojeNoBrasil()) {
     erros.push({
       campo: 'data_encontrado',
-      message: 'Informe uma data válida no formato YYYY-MM-DD.',
+      message: 'Informe uma data válida no formato YYYY-MM-DD, até hoje.',
     });
   }
 
@@ -380,10 +386,10 @@ router.put('/:id', async (req, res, next) => {
     erros.push({ campo: 'titulo', message: 'Título obrigatório.' });
   }
 
-  if (!dataValida(corpo.data_encontrado)) {
+  if (!dataValida(corpo.data_encontrado) || corpo.data_encontrado > hojeNoBrasil()) {
     erros.push({
       campo: 'data_encontrado',
-      message: 'Informe uma data válida no formato YYYY-MM-DD.',
+      message: 'Informe uma data válida no formato YYYY-MM-DD, até hoje.',
     });
   }
 

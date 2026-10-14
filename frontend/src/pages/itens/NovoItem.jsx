@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { criarItem } from '../../services/itens.js';
 import { listarCategorias } from '../../services/categorias.js';
 import { listarRegistradores } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Button from '../../components/Button.jsx';
+
+function hojeNoBrasil() {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+  }).format(new Date());
+}
 
 export default function NovoItem() {
   const navigate = useNavigate();
@@ -25,14 +31,21 @@ export default function NovoItem() {
   const [erroGeral, setErroGeral] = useState('');
 
   useEffect(() => {
-    listarCategorias().then(setCategorias).catch(() => setCategorias([]));
-    listarRegistradores().then(setRegistradores).catch(() => setRegistradores([]));
+    listarCategorias()
+      .then(setCategorias)
+      .catch(() => setCategorias([]));
+    listarRegistradores()
+      .then(setRegistradores)
+      .catch(() => setRegistradores([]));
   }, []);
 
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
   function validar() {
     const e = {};
+    if (form.data_encontrado > hojeNoBrasil()) {
+      e.data_encontrado = 'A data não pode ser posterior a hoje.';
+    }
     if (!form.titulo.trim()) e.titulo = 'Informe o título.';
     if (!form.categoria_id) e.categoria_id = 'Selecione a categoria.';
     if (!form.local_encontrado.trim()) e.local_encontrado = 'Informe o local onde foi encontrado.';
@@ -77,11 +90,21 @@ export default function NovoItem() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <Input label="Título" required value={form.titulo} error={erros.titulo} onChange={(e) => set('titulo', e.target.value)} />
+          <Input
+            label="Título"
+            required
+            value={form.titulo}
+            error={erros.titulo}
+            onChange={(e) => set('titulo', e.target.value)}
+          />
         </div>
 
         <div className="sm:col-span-2">
-          <Input label="Descrição" value={form.descricao} onChange={(e) => set('descricao', e.target.value)} />
+          <Input
+            label="Descrição"
+            value={form.descricao}
+            onChange={(e) => set('descricao', e.target.value)}
+          />
         </div>
 
         <label className="block">
@@ -95,7 +118,9 @@ export default function NovoItem() {
           >
             <option value="">Selecione...</option>
             {categorias.map((c) => (
-              <option key={c.id} value={c.id}>{c.nome}</option>
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
             ))}
           </select>
           {erros.categoria_id && <p className="mt-1 text-xs text-red-600">{erros.categoria_id}</p>}
@@ -112,21 +137,43 @@ export default function NovoItem() {
           >
             <option value="">Selecione...</option>
             {registradores.map((r) => (
-              <option key={r.id} value={r.id}>{r.nome}</option>
+              <option key={r.id} value={r.id}>
+                {r.nome}
+              </option>
             ))}
           </select>
-          {erros.registrador_id && <p className="mt-1 text-xs text-red-600">{erros.registrador_id}</p>}
+          {erros.registrador_id && (
+            <p className="mt-1 text-xs text-red-600">{erros.registrador_id}</p>
+          )}
         </label>
 
         <Input label="Cor" value={form.cor} onChange={(e) => set('cor', e.target.value)} />
         <Input label="Marca" value={form.marca} onChange={(e) => set('marca', e.target.value)} />
-        <Input label="Local encontrado" required value={form.local_encontrado} error={erros.local_encontrado} onChange={(e) => set('local_encontrado', e.target.value)} />
-        <Input label="Data encontrado" type="date" required value={form.data_encontrado} error={erros.data_encontrado} onChange={(e) => set('data_encontrado', e.target.value)} />
+        <Input
+          label="Local encontrado"
+          required
+          value={form.local_encontrado}
+          error={erros.local_encontrado}
+          onChange={(e) => set('local_encontrado', e.target.value)}
+        />
+        <Input
+          label="Data encontrado"
+          type="date"
+          max={hojeNoBrasil()}
+          required
+          value={form.data_encontrado}
+          error={erros.data_encontrado}
+          onChange={(e) => set('data_encontrado', e.target.value)}
+        />
       </div>
 
       <div className="mt-6 flex gap-2">
-        <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
-        <Button variant="secondary" onClick={() => navigate('/itens')}>Cancelar</Button>
+        <Button onClick={salvar} loading={enviando}>
+          Cadastrar
+        </Button>
+        <Button variant="secondary" onClick={() => navigate('/itens')}>
+          Cancelar
+        </Button>
       </div>
     </div>
   );
