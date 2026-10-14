@@ -66,20 +66,31 @@ let nextId = 4;
 let nextCodigo = 4;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function listarItens({ q = '', status = '', categoria_id = '' } = {}) {
+export async function listarItens({
+  q = '',
+  status = '',
+  categoria_id = '',
+  data_inicio = '',
+  data_fim = '',
+} = {}) {
   if (USE_MOCK) {
     await delay(300);
     const termo = q.trim().toLowerCase();
+    // datas no formato YYYY-MM-DD comparam corretamente como texto
     return mockData.filter(
       (i) =>
         (!termo ||
           i.titulo.toLowerCase().includes(termo) ||
           (i.descricao || '').toLowerCase().includes(termo)) &&
         (!status || i.status === status) &&
-        (!categoria_id || String(i.categoria_id) === String(categoria_id))
+        (!categoria_id || String(i.categoria_id) === String(categoria_id)) &&
+        (!data_inicio || i.data_encontrado >= data_inicio) &&
+        (!data_fim || i.data_encontrado <= data_fim)
     );
   }
-  const { data } = await api.get('/itens', { params: { q, status, categoria_id } });
+  const { data } = await api.get('/itens', {
+    params: { q, status, categoria_id, data_inicio, data_fim },
+  });
   return data.data ?? data;
 }
 

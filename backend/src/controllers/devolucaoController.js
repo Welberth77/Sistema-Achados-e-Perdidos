@@ -2,7 +2,7 @@ import pool from '../config/db.js';
 
 export async function registrarDevolucao(req, res) {
   const { item_id, comprovante, observacao } = req.body;
-  const usuario_id = req.usuario.id;
+  const usuario_id = req.usuario ? req.usuario.id : null;
 
   // Validação estrita da regra de negócio (UC-06)
   if (!item_id || !comprovante || typeof comprovante !== 'string' || comprovante.trim() === '') {
