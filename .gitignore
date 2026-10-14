@@ -25,3 +25,5 @@ Thumbs.db
 # Cache
 .eslintcache
 coverage/
+
+/.env.docker

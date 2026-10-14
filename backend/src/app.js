@@ -1,4 +1,5 @@
-﻿import relatosRouter from './routes/relatos.js';
+﻿import categoriasRouter from './routes/categorias.js';
+import relatosRouter from './routes/relatos.js';
 import itensRouter from './routes/itens.js';
 import registradoresRouter from './routes/registradores.js';
 import authRouter, { autenticar } from './routes/auth.js';
@@ -18,6 +19,7 @@ app.use('/api/auth', authRouter);
 
 // As próximas rotas da API exigem autenticação.
 app.use('/api', autenticar);
+app.use('/api/categorias', categoriasRouter);
 app.use('/api/relatos', relatosRouter);
 app.use('/api/itens', itensRouter);
 app.use('/api/registradores', registradoresRouter);
