@@ -1,4 +1,4 @@
-﻿# Sobe o banco (PostgreSQL) e o backend (Node/Express) juntos.
+# Sobe o banco (PostgreSQL) e o backend (Node/Express) juntos.
 # O frontend roda localmente com `npm run dev` e aponta para http://localhost:3000.
 #
 #   docker compose up -d      # sobe tudo em segundo plano
@@ -46,4 +46,3 @@ services:
 
 volumes:
   pgdata:
-
