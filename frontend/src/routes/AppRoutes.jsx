@@ -1,4 +1,5 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import NovoRelato from '../pages/relatos/NovoRelato.jsx';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Sessao, ExigirSessao } from '../auth/Sessao.jsx';
 import App from '../App.jsx';
 import Login from '../pages/Login.jsx';
@@ -30,6 +31,7 @@ export default function AppRoutes() {
             <Route path="/itens/novo" element={<NovoItem />} />
             <Route path="/itens/:id" element={<DetalhesItem />} />
             <Route path="/relatos" element={<Relatos />} />
+            <Route path="/relatos/novo" element={<NovoRelato />} />
             <Route path="/relatos/:id" element={<DetalhesRelato />} />
             <Route path="/consulta" element={<Consulta />} />
             <Route path="/casos" element={<Casos />} />

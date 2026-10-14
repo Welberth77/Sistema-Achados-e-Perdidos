@@ -3,6 +3,12 @@ import pool from '../db.js';
 
 const router = Router();
 
+function hojeNoBrasil() {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+  }).format(new Date());
+}
+
 function responderErro(res, status, code, message, details = []) {
   return res.status(status).json({ error: { code, message, details } });
 }
@@ -30,8 +36,16 @@ function dataValida(valor) {
 }
 
 const consultaRelato = `
-  SELECT r.*, to_char(r.data_perda, 'YYYY-MM-DD') AS data_perda
+  SELECT r.*, to_char(r.data_perda, 'YYYY-MM-DD') AS data_perda,
+         CASE WHEN c.id IS NULL THEN NULL
+              ELSE jsonb_build_object('id', c.id, 'nome', c.nome)
+         END AS categoria,
+         CASE WHEN p.id IS NULL THEN NULL
+              ELSE jsonb_build_object('id', p.id, 'nome', p.nome)
+         END AS registrador
   FROM relatos_perda r
+  LEFT JOIN categorias c ON c.id = r.categoria_id
+  LEFT JOIN registradores p ON p.id = r.registrador_id
 `;
 
 router.get('/', async (req, res, next) => {
@@ -189,10 +203,10 @@ router.post('/', async (req, res, next) => {
     });
   }
 
-  if (dataPerda !== null && !dataValida(dataPerda)) {
+  if (dataPerda !== null && (!dataValida(dataPerda) || dataPerda > hojeNoBrasil())) {
     erros.push({
       campo: 'data_perda',
-      message: 'Informe uma data válida no formato YYYY-MM-DD.',
+      message: 'Informe uma data válida no formato YYYY-MM-DD, até hoje.',
     });
   }
 
@@ -345,10 +359,10 @@ router.put('/:id', async (req, res, next) => {
     });
   }
 
-  if (dataPerda !== null && !dataValida(dataPerda)) {
+  if (dataPerda !== null && (!dataValida(dataPerda) || dataPerda > hojeNoBrasil())) {
     erros.push({
       campo: 'data_perda',
-      message: 'Informe uma data válida no formato YYYY-MM-DD.',
+      message: 'Informe uma data válida no formato YYYY-MM-DD, até hoje.',
     });
   }
 
@@ -443,12 +457,16 @@ router.get('/:id/correspondencias', async (req, res, next) => {
     );
 
     const resultado = await pool.query(
-      `SELECT id, item_achado_id, relato_perda_id, pontuacao,
-              status, criado_em
-       FROM correspondencias
-       WHERE relato_perda_id = $1 AND status = 'SUGERIDA'
-       ORDER BY criado_em DESC, id DESC
-       LIMIT $2 OFFSET $3`,
+      `SELECT co.id, co.item_achado_id, co.relato_perda_id,
+        co.pontuacao, co.status, co.criado_em,
+        jsonb_build_object(
+          'id', i.id, 'codigo', i.codigo, 'titulo', i.titulo
+        ) AS item
+ FROM correspondencias co
+ JOIN itens_achados i ON i.id = co.item_achado_id
+ WHERE co.relato_perda_id = $1 AND co.status = 'SUGERIDA'
+ ORDER BY co.criado_em DESC, co.id DESC
+ LIMIT $2 OFFSET $3`,
       [req.params.id, limit, (page - 1) * limit]
     );
 
