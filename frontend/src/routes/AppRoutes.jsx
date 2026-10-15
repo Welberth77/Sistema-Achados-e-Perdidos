@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import App from '../App.jsx';
+import ProtectedRoute from '../components/ProtectedRoute.jsx';
+import Login from '../pages/Login.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
 import Registradores from '../pages/registradores/Registradores.jsx';
 import NovoRegistrador from '../pages/registradores/NovoRegistrador.jsx';
@@ -12,11 +14,19 @@ import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
 
-// Mapa de rotas. Novas telas entram como <Route> dentro do layout App.
+// Mapa de rotas. /login é pública; o restante fica atrás de ProtectedRoute.
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route element={<App />}>
+      <Route path="/login" element={<Login />} />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <App />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
 
