@@ -17,13 +17,13 @@ export async function login(req, res) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
     const token = jwt.sign(
-      { id: usuario.id, email: usuario.email, perfil: usuario.perfil },
+      { id: usuario.id, email: usuario.email, papel: usuario.papel },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -35,7 +35,7 @@ export async function login(req, res) {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
-        perfil: usuario.perfil,
+        papel: usuario.papel,
       },
     });
   } catch (err) {
