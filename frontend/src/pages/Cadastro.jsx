@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api.js';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
+import { emailValido } from '../utils/validacao.js';
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function Cadastro() {
     const e = {};
     if (!form.nome.trim()) e.nome = 'Informe seu nome.';
     if (!form.email.trim()) e.email = 'Informe seu e-mail.';
+    else if (!emailValido(form.email)) e.email = 'E-mail inválido.';
     if (form.senha.length < 6) e.senha = 'A senha deve ter ao menos 6 caracteres.';
     if (form.confirmar !== form.senha) e.confirmar = 'As senhas não coincidem.';
     setErros(e);
@@ -29,11 +32,21 @@ export default function Cadastro() {
     if (!validar()) return;
     setEnviando(true);
     try {
-      // TODO: integrar com POST /api/auth/registrar quando o backend expor o endpoint de autocadastro.
-      await new Promise((r) => setTimeout(r, 500));
+      await api.post('/auth/registrar', {
+        nome: form.nome.trim(),
+        email: form.email.trim(),
+        senha: form.senha,
+      });
       setOk(true);
-    } catch {
-      setErroGeral('Não foi possível criar a conta. Tente novamente.');
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 409) {
+        setErros((prev) => ({ ...prev, email: 'Já existe uma conta com este e-mail.' }));
+      } else if (status === 400) {
+        setErroGeral(err.response?.data?.error || 'Verifique os dados informados.');
+      } else {
+        setErroGeral('Não foi possível criar a conta. Verifique se o servidor está no ar.');
+      }
     } finally {
       setEnviando(false);
     }

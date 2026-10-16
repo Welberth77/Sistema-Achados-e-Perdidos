@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
+import { emailValido } from '../utils/validacao.js';
 
 // O que o sistema faz — conteúdo real do painel institucional.
 const DESTAQUES = [
@@ -21,13 +22,24 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [erros, setErros] = useState({});
+
+  function validar() {
+    const e = {};
+    if (!email.trim()) e.email = 'Informe seu e-mail.';
+    else if (!emailValido(email)) e.email = 'E-mail inválido.';
+    if (!senha) e.senha = 'Informe sua senha.';
+    setErros(e);
+    return Object.keys(e).length === 0;
+  }
 
   async function entrar(e) {
     e.preventDefault();
     setErro('');
+    if (!validar()) return;
     setEnviando(true);
     try {
-      await login(email, senha);
+      await login(email.trim(), senha);
       navigate(destino, { replace: true });
     } catch (err) {
       if (err.response?.status === 401) {
@@ -106,6 +118,7 @@ export default function Login() {
               placeholder="voce@achados.local"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              error={erros.email}
               required
             />
             <Input
@@ -114,12 +127,23 @@ export default function Login() {
               autoComplete="current-password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
+              error={erros.senha}
               required
             />
+            <div className="flex justify-end">
+              <Link to="/esqueci-senha" className="text-sm text-link hover:underline">
+                Esqueceu a senha?
+              </Link>
+            </div>
             <Button type="submit" loading={enviando} className="w-full">
               Entrar
             </Button>
           </form>
+
+          <p className="mt-4 text-center text-sm text-muted">
+            Não tem conta?{' '}
+            <Link to="/cadastro" className="font-medium text-link hover:underline">Criar conta</Link>
+          </p>
         </div>
       </section>
     </div>
