@@ -39,8 +39,8 @@ export default function Login() {
     if (!validar()) return;
     setEnviando(true);
     try {
-      await login(email.trim(), senha);
-      navigate(destino, { replace: true });
+      const u = await login(email.trim(), senha);
+      navigate(u?.papel === 'USUARIO' ? '/inicio' : destino, { replace: true });
     } catch (err) {
       if (err.response?.status === 401) {
         setErro('E-mail ou senha inválidos.');

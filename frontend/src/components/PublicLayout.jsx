@@ -21,7 +21,7 @@ function IconeLua() {
 
 // Layout das páginas públicas (sem login): cabeçalho simples + conteúdo + rodapé.
 export default function PublicLayout() {
-  const { autenticado } = useAuth();
+  const { autenticado, usuario } = useAuth();
   const { escuro, alternar } = useTheme();
   const navigate = useNavigate();
 
@@ -50,7 +50,9 @@ export default function PublicLayout() {
             </button>
             <div className="mx-1.5 h-6 w-px bg-border" aria-hidden="true" />
             {autenticado ? (
-              <Button size="sm" onClick={() => navigate('/dashboard')}>Ir para o painel</Button>
+              <Button size="sm" onClick={() => navigate(usuario?.papel === 'USUARIO' ? '/inicio' : '/dashboard')}>
+                {usuario?.papel === 'USUARIO' ? 'Minha área' : 'Ir para o painel'}
+              </Button>
             ) : (
               <>
                 <Button size="sm" variant="ghost" onClick={() => navigate('/login')}>Entrar</Button>

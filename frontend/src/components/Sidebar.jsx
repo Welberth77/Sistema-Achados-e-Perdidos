@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
-const links = [
+const base = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/registradores', label: 'Registradores' },
   { to: '/itens', label: 'Itens' },
@@ -10,12 +11,14 @@ const links = [
 ];
 
 export default function Sidebar() {
+  const { usuario } = useAuth();
+  const links =
+    usuario?.papel === 'ADMINISTRADOR' ? [...base, { to: '/usuarios', label: 'Usuários' }] : base;
+
   return (
     <aside className="shrink-0 border-b border-border bg-surface md:w-60 md:border-b-0 md:border-r">
       <div className="hidden h-14 items-center gap-2 border-b border-border px-5 md:flex">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-fg">
-          AP
-        </span>
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-fg">AP</span>
         <span className="text-sm font-semibold text-fg">Achados &amp; Perdidos</span>
       </div>
       <nav
