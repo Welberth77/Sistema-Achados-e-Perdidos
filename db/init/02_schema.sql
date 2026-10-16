@@ -20,7 +20,7 @@ CREATE TABLE usuarios (
   email         VARCHAR(160) NOT NULL UNIQUE,
   senha_hash    VARCHAR(255) NOT NULL,
   papel         VARCHAR(20)  NOT NULL DEFAULT 'SERVIDOR'
-                CHECK (papel IN ('ADMINISTRADOR','SERVIDOR')),
+                CHECK (papel IN ('ADMINISTRADOR','SERVIDOR','USUARIO')),
   ativo         BOOLEAN      NOT NULL DEFAULT TRUE,
   criado_em     TIMESTAMPTZ  NOT NULL DEFAULT now(),
   atualizado_em TIMESTAMPTZ  NOT NULL DEFAULT now()
