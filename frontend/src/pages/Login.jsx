@@ -70,7 +70,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative z-10 text-sm text-white/60">AFYA · Centro Universitário UNIMA</p>
+        <p className="relative z-10 text-sm text-white/60">Itens encontrados, donos reencontrados.</p>
 
         {/* motivo decorativo sutil */}
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full border border-white/10" aria-hidden="true" />
