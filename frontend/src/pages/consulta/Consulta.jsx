@@ -5,9 +5,9 @@ import { listarCategorias } from '../../services/categorias.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
+import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 
-// valores iguais ao enum itens_achados.status do banco
 const STATUS = [
   { value: '', label: 'Todos os status' },
   { value: 'RECEBIDO', label: 'Recebido' },
@@ -55,56 +55,54 @@ export default function Consulta() {
   }
 
   const colunas = [
-    { key: 'codigo', header: 'Código' },
+    { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
     { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
     { key: 'local_encontrado', header: 'Local' },
-    { key: 'data_encontrado', header: 'Data' },
+    { key: 'data_encontrado', header: 'Data', className: 'tabular-nums text-muted' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
   ];
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Consulta de itens</h1>
+      <div className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Consulta de itens</h1>
+        <p className="mt-1 text-sm text-muted">Busque itens achados combinando vários critérios.</p>
+      </div>
 
-      <div className="mb-6 rounded border bg-white p-4">
+      <div className="mb-6 rounded-lg border border-border bg-surface p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="sm:col-span-2 lg:col-span-1">
             <Input
               label="Termo"
-              placeholder="Título ou descrição..."
+              placeholder="Título ou descrição…"
               value={filtros.q}
               onChange={(e) => set('q', e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && buscar()}
             />
           </div>
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700">Categoria</span>
-            <select
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
-              value={filtros.categoria_id}
-              onChange={(e) => set('categoria_id', e.target.value)}
-            >
-              <option value="">Todas</option>
-              {categorias.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Categoria"
+            className="w-full"
+            value={filtros.categoria_id}
+            onChange={(e) => set('categoria_id', e.target.value)}
+          >
+            <option value="">Todas</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
+            ))}
+          </Select>
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700">Status</span>
-            <select
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
-              value={filtros.status}
-              onChange={(e) => set('status', e.target.value)}
-            >
-              {STATUS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Status"
+            className="w-full"
+            options={STATUS}
+            value={filtros.status}
+            onChange={(e) => set('status', e.target.value)}
+          />
 
           <Input
             label="Encontrado de"
@@ -122,13 +120,14 @@ export default function Consulta() {
 
         <div className="mt-4 flex gap-2">
           <Button onClick={buscar} loading={loading}>Buscar</Button>
-          <Button variant="secondary" onClick={limpar}>Limpar</Button>
+          <Button variant="ghost" onClick={limpar}>Limpar</Button>
         </div>
       </div>
 
       {buscou && (
-        <p className="mb-2 text-sm text-gray-600">
-          {resultado.length} resultado{resultado.length === 1 ? '' : 's'} encontrado{resultado.length === 1 ? '' : 's'}.
+        <p className="mb-2 text-sm text-muted">
+          {resultado.length} resultado{resultado.length === 1 ? '' : 's'} encontrado
+          {resultado.length === 1 ? '' : 's'}.
         </p>
       )}
 
@@ -141,8 +140,8 @@ export default function Consulta() {
           onRowClick={(row) => navigate(`/itens/${row.id}`)}
         />
       ) : (
-        <div className="rounded border border-dashed p-8 text-center text-sm text-gray-500">
-          Use os filtros acima e clique em <span className="font-medium">Buscar</span> para consultar os itens.
+        <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
+          Use os filtros acima e clique em <span className="font-medium text-fg">Buscar</span> para consultar os itens.
         </div>
       )}
     </div>

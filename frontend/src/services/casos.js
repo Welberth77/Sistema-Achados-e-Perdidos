@@ -2,7 +2,7 @@ import api from './api.js';
 
 // Enquanto o backend não entrega os endpoints, use o mock.
 // Quando estiver pronto, troque para false.
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // caso (campos do contrato/banco):
 // { id, codigo, item_achado_id, relato_perda_id, responsavel_id, status,

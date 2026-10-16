@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api.js';
 import CardEstatistica from '../components/CardEstatistica.jsx';
-import Button from '../components/Button.jsx';
-import StatusBadge from '../components/StatusBadge.jsx';
+
+const CONEXAO = {
+  verificando: { label: 'Verificando conexão…', dot: 'bg-amber-400' },
+  conectado: { label: 'Backend conectado', dot: 'bg-emerald-500' },
+  inesperado: { label: 'Resposta inesperada do backend', dot: 'bg-amber-400' },
+  erro: { label: 'Sem conexão com o backend', dot: 'bg-rose-500' },
+};
 
 export default function Dashboard() {
-  const [status, setStatus] = useState('verificando...');
+  const [conexao, setConexao] = useState('verificando');
 
   useEffect(() => {
     api
       .get('/health')
-      .then((res) => setStatus(res.data?.status === 'ok' ? 'conectado' : 'resposta inesperada'))
-      .catch(() => setStatus('sem conexão com o backend'));
+      .then((res) => setConexao(res.data?.status === 'ok' ? 'conectado' : 'inesperado'))
+      .catch(() => setConexao('erro'));
   }, []);
+
+  const c = CONEXAO[conexao] || CONEXAO.verificando;
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Dashboard</h1>
-      <p className="mb-6 text-sm text-gray-600">
-        Status do backend: <span className="font-semibold">{status}</span>
-      </p>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted">Visão geral dos itens, custódia e casos.</p>
+        </div>
+        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted">
+          <span className={`h-2 w-2 rounded-full ${c.dot}`} aria-hidden="true" />
+          {c.label}
+        </span>
+      </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <CardEstatistica titulo="Itens achados" valor="—" />
         <CardEstatistica titulo="Em custódia" valor="—" />
         <CardEstatistica titulo="Devolvidos" valor="—" />
@@ -29,13 +42,9 @@ export default function Dashboard() {
         <CardEstatistica titulo="Casos encerrados" valor="—" />
       </div>
 
-      {/* teste rápido dos componentes base */}
-      <div className="flex items-center gap-2">
-        <Button>Salvar</Button>
-        <Button variant="secondary">Cancelar</Button>
-        <Button variant="danger" loading>Excluir</Button>
-        <StatusBadge status="EM_CUSTODIA" />
-      </div>
+      <p className="mt-4 text-xs text-subtle">
+        Os indicadores serão preenchidos quando o endpoint de resumo (/api/dashboard/resumo) estiver disponível.
+      </p>
     </div>
   );
 }

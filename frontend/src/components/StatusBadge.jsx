@@ -1,37 +1,42 @@
-// Rótulos e cores dos status — valores em MAIÚSCULAS, iguais aos CHECKs do banco.
-// Abrange item, relato, caso e devolução (status compartilhados usam a mesma cor).
-const config = {
-  // itens_achados
-  RECEBIDO: { label: 'Recebido', cls: 'bg-blue-100 text-blue-800' },
-  EM_CUSTODIA: { label: 'Em custódia', cls: 'bg-yellow-100 text-yellow-800' },
-  EM_ANALISE: { label: 'Em análise', cls: 'bg-indigo-100 text-indigo-800' },
-  EM_DEVOLUCAO: { label: 'Em devolução', cls: 'bg-orange-100 text-orange-800' },
-  DEVOLVIDO: { label: 'Devolvido', cls: 'bg-green-100 text-green-800' },
-  DESCARTADO: { label: 'Descartado', cls: 'bg-gray-200 text-gray-700' },
+// Status em MAIÚSCULAS, iguais aos CHECKs do banco (item, relato, caso, devolução).
+// Cada status mapeia para um "tom" semântico; os tons têm variante clara e escura.
+const TONES = {
+  blue: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/25',
+  amber: 'bg-amber-50 text-amber-800 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/25',
+  green: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/25',
+  slate: 'bg-slate-100 text-slate-600 ring-slate-500/20 dark:bg-slate-400/10 dark:text-slate-300 dark:ring-slate-400/20',
+  violet: 'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-400/10 dark:text-violet-300 dark:ring-violet-400/25',
+  teal: 'bg-teal-50 text-teal-700 ring-teal-600/20 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/25',
+  rose: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/25',
+};
 
-  // relatos_perda
-  ABERTO: { label: 'Aberto', cls: 'bg-blue-100 text-blue-800' },
-  CORRESPONDENCIA: { label: 'Correspondência', cls: 'bg-purple-100 text-purple-800' },
-  ENCERRADO: { label: 'Encerrado', cls: 'bg-gray-200 text-gray-700' },
-  CANCELADO: { label: 'Cancelado', cls: 'bg-red-100 text-red-800' },
-
-  // casos
-  AGUARDANDO_COMPROVACAO: { label: 'Aguardando comprovação', cls: 'bg-yellow-100 text-yellow-800' },
-  AUTORIZADO: { label: 'Autorizado', cls: 'bg-teal-100 text-teal-800' },
-
-  // devolucoes
-  INICIADA: { label: 'Iniciada', cls: 'bg-blue-100 text-blue-800' },
-  PROPRIEDADE_COMPROVADA: { label: 'Propriedade comprovada', cls: 'bg-teal-100 text-teal-800' },
-  AUTORIZADA: { label: 'Autorizada', cls: 'bg-teal-100 text-teal-800' },
-  CONCLUIDA: { label: 'Concluída', cls: 'bg-green-100 text-green-800' },
-  CANCELADA: { label: 'Cancelada', cls: 'bg-red-100 text-red-800' },
+const CONFIG = {
+  RECEBIDO: { label: 'Recebido', tone: 'blue' },
+  EM_CUSTODIA: { label: 'Em custódia', tone: 'amber' },
+  EM_ANALISE: { label: 'Em análise', tone: 'violet' },
+  EM_DEVOLUCAO: { label: 'Em devolução', tone: 'teal' },
+  DEVOLVIDO: { label: 'Devolvido', tone: 'green' },
+  DESCARTADO: { label: 'Descartado', tone: 'slate' },
+  ABERTO: { label: 'Aberto', tone: 'blue' },
+  CORRESPONDENCIA: { label: 'Correspondência', tone: 'violet' },
+  ENCERRADO: { label: 'Encerrado', tone: 'slate' },
+  CANCELADO: { label: 'Cancelado', tone: 'rose' },
+  AGUARDANDO_COMPROVACAO: { label: 'Aguardando comprovação', tone: 'amber' },
+  AUTORIZADO: { label: 'Autorizado', tone: 'teal' },
+  INICIADA: { label: 'Iniciada', tone: 'blue' },
+  PROPRIEDADE_COMPROVADA: { label: 'Propriedade comprovada', tone: 'teal' },
+  AUTORIZADA: { label: 'Autorizada', tone: 'teal' },
+  CONCLUIDA: { label: 'Concluída', tone: 'green' },
+  CANCELADA: { label: 'Cancelada', tone: 'rose' },
 };
 
 export default function StatusBadge({ status }) {
-  const item = config[status] || { label: String(status || '—'), cls: 'bg-gray-100 text-gray-700' };
+  const c = CONFIG[status] || { label: String(status || '—'), tone: 'slate' };
   return (
-    <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${item.cls}`}>
-      {item.label}
+    <span
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[c.tone]}`}
+    >
+      {c.label}
     </span>
   );
 }

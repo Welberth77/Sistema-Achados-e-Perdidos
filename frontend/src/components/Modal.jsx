@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 export default function Modal({ open, onClose, title, children, footer, size = 'md' }) {
-  // Fecha com ESC e trava o scroll do fundo enquanto aberto
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === 'Escape' && onClose?.();
@@ -19,21 +18,21 @@ export default function Modal({ open, onClose, title, children, footer, size = '
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className={`w-full ${sizes[size] || sizes.md} rounded-lg bg-white p-6 shadow-lg`}
+        className={`w-full ${sizes[size] || sizes.md} rounded-xl border border-border bg-surface p-6 text-fg shadow-xl`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold text-fg">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="text-2xl leading-none text-gray-400 hover:text-gray-600"
+            className="grid h-8 w-8 place-items-center rounded-md text-xl leading-none text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             &times;
           </button>
