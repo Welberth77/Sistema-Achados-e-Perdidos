@@ -1,0 +1,98 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Input from '../components/Input.jsx';
+import Button from '../components/Button.jsx';
+
+export default function Cadastro() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ nome: '', email: '', senha: '', confirmar: '' });
+  const [erros, setErros] = useState({});
+  const [erroGeral, setErroGeral] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  function validar() {
+    const e = {};
+    if (!form.nome.trim()) e.nome = 'Informe seu nome.';
+    if (!form.email.trim()) e.email = 'Informe seu e-mail.';
+    if (form.senha.length < 6) e.senha = 'A senha deve ter ao menos 6 caracteres.';
+    if (form.confirmar !== form.senha) e.confirmar = 'As senhas não coincidem.';
+    setErros(e);
+    return Object.keys(e).length === 0;
+  }
+
+  async function enviar(e) {
+    e.preventDefault();
+    setErroGeral('');
+    if (!validar()) return;
+    setEnviando(true);
+    try {
+      // TODO: integrar com POST /api/auth/registrar quando o backend expor o endpoint de autocadastro.
+      await new Promise((r) => setTimeout(r, 500));
+      setOk(true);
+    } catch {
+      setErroGeral('Não foi possível criar a conta. Tente novamente.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  if (ok) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-4">
+        <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-6 text-center">
+          <h1 className="text-xl font-semibold text-fg">Conta criada</h1>
+          <p className="mt-2 text-sm text-muted">
+            Agora você já pode entrar e registrar um relato de perda.
+          </p>
+          <Button className="mt-5 w-full" onClick={() => navigate('/login')}>
+            Ir para o login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+      <div className="w-full max-w-sm">
+        <Link
+          to="/"
+          className="mb-8 inline-flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-sm font-bold text-primary-fg">
+            AP
+          </span>
+          <span className="text-base font-semibold text-fg">Achados &amp; Perdidos</span>
+        </Link>
+
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Criar conta</h1>
+        <p className="mt-1 text-sm text-muted">Para relatar perdas e acompanhar seus relatos.</p>
+
+        {erroGeral && (
+          <div
+            role="alert"
+            className="mt-5 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300"
+          >
+            {erroGeral}
+          </div>
+        )}
+
+        <form onSubmit={enviar} className="mt-6 space-y-4">
+          <Input label="Nome" value={form.nome} error={erros.nome} onChange={(e) => set('nome', e.target.value)} required />
+          <Input label="E-mail" type="email" autoComplete="email" value={form.email} error={erros.email} onChange={(e) => set('email', e.target.value)} required />
+          <Input label="Senha" type="password" autoComplete="new-password" value={form.senha} error={erros.senha} onChange={(e) => set('senha', e.target.value)} required />
+          <Input label="Confirmar senha" type="password" autoComplete="new-password" value={form.confirmar} error={erros.confirmar} onChange={(e) => set('confirmar', e.target.value)} required />
+          <Button type="submit" loading={enviando} className="w-full">Criar conta</Button>
+        </form>
+
+        <p className="mt-4 text-center text-sm text-muted">
+          Já tem conta?{' '}
+          <Link to="/login" className="font-medium text-link hover:underline">Entrar</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
