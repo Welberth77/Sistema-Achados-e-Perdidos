@@ -6,6 +6,9 @@ import authRouter from './routes/authRoutes.js';
 import custodiaRouter from './routes/custodiaRoutes.js';
 import devolucaoRouter from './routes/devolucaoRoutes.js';
 import casosRouter from './routes/casosRoutes.js';
+import itensRoutes from './routes/itens.routes.js';
+import registradoresRouter from './routes/registradoresRoutes.js';
+import relatosRouter from './routes/relatosRoutes.js';
 
 const app = express();
 
@@ -20,6 +23,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/custodia', custodiaRouter);
 app.use('/api/devolucoes', devolucaoRouter);
 app.use('/api/casos', casosRouter);
+app.use('/api/itens', itensRoutes);
+app.use('/api/registradores', registradoresRouter);
+app.use('/api/relatos', relatosRouter);
 
 // Rota não encontrada (404)
 app.use((req, res) => {
