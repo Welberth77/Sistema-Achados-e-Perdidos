@@ -1,12 +1,16 @@
 import { Routes, Route } from 'react-router-dom';
 import App from '../App.jsx';
+import AlunoLayout from '../components/AlunoLayout.jsx';
 import PublicLayout from '../components/PublicLayout.jsx';
 import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import Catalogo from '../pages/publico/Catalogo.jsx';
 import Login from '../pages/Login.jsx';
 import Cadastro from '../pages/Cadastro.jsx';
 import EsqueciSenha from '../pages/EsqueciSenha.jsx';
+import Inicio from '../pages/aluno/Inicio.jsx';
+import RelatarPerda from '../pages/aluno/RelatarPerda.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
+import Usuarios from '../pages/usuarios/Usuarios.jsx';
 import Registradores from '../pages/registradores/Registradores.jsx';
 import NovoRegistrador from '../pages/registradores/NovoRegistrador.jsx';
 import Itens from '../pages/itens/Itens.jsx';
@@ -17,6 +21,8 @@ import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
+
+const STAFF = ['ADMINISTRADOR', 'SERVIDOR'];
 
 export default function AppRoutes() {
   return (
@@ -29,15 +35,28 @@ export default function AppRoutes() {
       <Route path="/cadastro" element={<Cadastro />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
 
-      {/* Área autenticada (equipe/administração) */}
+      {/* Área do usuário comum (aluno) */}
       <Route
         element={
-          <ProtectedRoute>
+          <ProtectedRoute papeis={['USUARIO']}>
+            <AlunoLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/inicio" element={<Inicio />} />
+        <Route path="/relatar" element={<RelatarPerda />} />
+      </Route>
+
+      {/* Área da equipe (administração) */}
+      <Route
+        element={
+          <ProtectedRoute papeis={STAFF}>
             <App />
           </ProtectedRoute>
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/usuarios" element={<Usuarios />} />
 
         <Route path="/registradores" element={<Registradores />} />
         <Route path="/registradores/novo" element={<NovoRegistrador />} />
