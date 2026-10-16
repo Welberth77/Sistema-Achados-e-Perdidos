@@ -5,6 +5,7 @@ import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import Catalogo from '../pages/publico/Catalogo.jsx';
 import Login from '../pages/Login.jsx';
 import Cadastro from '../pages/Cadastro.jsx';
+import EsqueciSenha from '../pages/EsqueciSenha.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
 import Registradores from '../pages/registradores/Registradores.jsx';
 import NovoRegistrador from '../pages/registradores/NovoRegistrador.jsx';
@@ -26,6 +27,7 @@ export default function AppRoutes() {
       </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Cadastro />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenha />} />
 
       {/* Área autenticada (equipe/administração) */}
       <Route
