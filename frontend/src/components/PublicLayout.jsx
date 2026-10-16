@@ -67,7 +67,7 @@ export default function PublicLayout() {
 
       <footer className="border-t border-border bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-5 text-sm text-muted sm:px-6">
-          AFYA · Centro Universitário UNIMA — Sistema de Achados e Perdidos
+          Sistema de Achados e Perdidos
         </div>
       </footer>
     </div>
