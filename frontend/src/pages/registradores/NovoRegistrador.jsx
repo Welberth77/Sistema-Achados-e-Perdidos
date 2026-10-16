@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { criarRegistrador } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
+import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 
-// enums do banco
 const VINCULOS = ['ALUNO', 'DOCENTE', 'TERCEIRIZADO', 'SERVIDOR', 'OUTRO'];
 const VINCULO_LABEL = {
   ALUNO: 'Aluno',
@@ -62,90 +62,63 @@ export default function NovoRegistrador() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h1 className="mb-4 text-2xl font-bold">Novo registrador</h1>
+    <div className="max-w-2xl">
+      <div className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Novo registrador</h1>
+        <p className="mt-1 text-sm text-muted">Cadastre uma pessoa autorizada a registrar itens e relatos.</p>
+      </div>
 
       {erroGeral && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300"
+        >
           {erroGeral}
         </div>
       )}
 
-      <div className="space-y-4">
-        <Input
-          label="Nome"
-          required
-          value={form.nome}
-          error={erros.nome}
-          onChange={(e) => set('nome', e.target.value)}
-        />
+      <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
+        <div className="space-y-4">
+          <Input label="Nome" required value={form.nome} error={erros.nome} onChange={(e) => set('nome', e.target.value)} />
 
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">
-            Vínculo <span className="text-red-600">*</span>
-          </span>
-          <select
-            className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+          <Select
+            label="Vínculo"
+            required
+            className="w-full"
+            error={erros.vinculo}
             value={form.vinculo}
             onChange={(e) => set('vinculo', e.target.value)}
           >
             {VINCULOS.map((v) => (
               <option key={v} value={v}>{VINCULO_LABEL[v]}</option>
             ))}
-          </select>
-        </label>
+          </Select>
 
-        <Input
-          label="Matrícula / SIAPE"
-          value={form.matricula}
-          onChange={(e) => set('matricula', e.target.value)}
-        />
+          <Input label="Matrícula / SIAPE" value={form.matricula} onChange={(e) => set('matricula', e.target.value)} />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700">Tipo de documento</span>
-            <select
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Select
+              label="Tipo de documento"
+              className="w-full"
+              options={TIPOS_DOC.map((t) => ({ value: t, label: t }))}
               value={form.tipo_documento}
               onChange={(e) => set('tipo_documento', e.target.value)}
-            >
-              {TIPOS_DOC.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <Input
-            label="Documento"
-            value={form.documento}
-            error={erros.documento}
-            onChange={(e) => set('documento', e.target.value)}
-          />
+            />
+            <Input label="Documento" value={form.documento} error={erros.documento} onChange={(e) => set('documento', e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input label="Telefone" value={form.telefone} onChange={(e) => set('telefone', e.target.value)} />
+            <Input label="E-mail" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+          </div>
+
+          <Input label="Observações" value={form.observacoes} onChange={(e) => set('observacoes', e.target.value)} />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            label="Telefone"
-            value={form.telefone}
-            onChange={(e) => set('telefone', e.target.value)}
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            value={form.email}
-            onChange={(e) => set('email', e.target.value)}
-          />
+        <div className="mt-6 flex gap-2">
+          <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
+          <Button variant="ghost" onClick={() => navigate('/registradores')}>Cancelar</Button>
         </div>
-
-        <Input
-          label="Observações"
-          value={form.observacoes}
-          onChange={(e) => set('observacoes', e.target.value)}
-        />
-      </div>
-
-      <div className="mt-6 flex gap-2">
-        <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
-        <Button variant="secondary" onClick={() => navigate('/registradores')}>Cancelar</Button>
       </div>
     </div>
   );

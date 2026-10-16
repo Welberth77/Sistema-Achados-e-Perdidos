@@ -8,10 +8,11 @@ const Input = forwardRef(function Input(
   const inputId = id || autoId;
 
   return (
-    <div className="block">
+    <div>
       {label && (
-        <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-gray-700">
-          {label} {required && <span className="text-red-600">*</span>}
+        <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-fg">
+          {label}
+          {required && <span className="text-rose-500"> *</span>}
         </label>
       )}
       <input
@@ -19,18 +20,17 @@ const Input = forwardRef(function Input(
         ref={ref}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
-        className={`w-full rounded border px-3 py-2 text-sm outline-none transition
-          focus:ring-2 focus:ring-gray-900
-          ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-gray-900'}
-          ${className}`}
+        className={`w-full rounded-md border bg-surface px-3 py-2 text-sm text-fg placeholder:text-subtle
+          outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary
+          ${error ? 'border-rose-400 focus-visible:ring-rose-400' : 'border-border-strong'} ${className}`}
         {...props}
       />
       {error ? (
-        <p id={`${inputId}-error`} className="mt-1 text-xs text-red-600">
+        <p id={`${inputId}-error`} className="mt-1 text-xs text-rose-500">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${inputId}-hint`} className="mt-1 text-xs text-gray-500">
+        <p id={`${inputId}-hint`} className="mt-1 text-xs text-muted">
           {hint}
         </p>
       ) : null}
