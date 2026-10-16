@@ -9,6 +9,7 @@ import casosRouter from './routes/casosRoutes.js';
 import dashboardRouter from './routes/dashboardRoutes.js';
 import usuariosRouter from './routes/usuariosRoutes.js';
 import relatosRouter from './routes/relatosRoutes.js';
+import itensRouter from './routes/itensRoutes.js';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use('/api/casos', casosRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/relatos', relatosRouter);
+app.use('/api/itens', itensRouter);
 
 // Rota não encontrada (404)
 app.use((req, res) => {

@@ -8,6 +8,7 @@ import Login from '../pages/Login.jsx';
 import Cadastro from '../pages/Cadastro.jsx';
 import EsqueciSenha from '../pages/EsqueciSenha.jsx';
 import Inicio from '../pages/aluno/Inicio.jsx';
+import MeusRelatos from '../pages/aluno/MeusRelatos.jsx';
 import RelatarPerda from '../pages/aluno/RelatarPerda.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
 import Usuarios from '../pages/usuarios/Usuarios.jsx';
@@ -44,6 +45,7 @@ export default function AppRoutes() {
         }
       >
         <Route path="/inicio" element={<Inicio />} />
+        <Route path="/meus-relatos" element={<MeusRelatos />} />
         <Route path="/relatar" element={<RelatarPerda />} />
       </Route>
 

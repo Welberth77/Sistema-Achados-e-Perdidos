@@ -19,7 +19,8 @@ function IconeLua() {
 }
 
 const links = [
-  { to: '/inicio', label: 'Início' },
+  { to: '/inicio', label: 'Procurar achados' },
+  { to: '/meus-relatos', label: 'Meus relatos' },
   { to: '/relatar', label: 'Relatar perda' },
 ];
 
