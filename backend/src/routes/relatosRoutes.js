@@ -1,11 +1,17 @@
 import express from 'express';
-import { meusRelatos, criarRelato } from '../controllers/relatosController.js';
-import { autenticarToken } from '../middlewares/authMiddleware.js';
+import {
+  listarRelatos, meusRelatos, obterRelato, listarCorrespondencias, criarRelato,
+} from '../controllers/relatosController.js';
+import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+const staff = exigePapel('ADMINISTRADOR', 'SERVIDOR');
 
-// Qualquer usuário autenticado (inclusive aluno) acessa os próprios relatos.
-router.get('/meus', autenticarToken, meusRelatos);
-router.post('/', autenticarToken, criarRelato);
+// Rotas específicas antes das com parâmetro.
+router.get('/meus', autenticarToken, meusRelatos);          // qualquer autenticado (aluno)
+router.post('/', autenticarToken, criarRelato);             // qualquer autenticado (aluno)
+router.get('/', autenticarToken, staff, listarRelatos);     // staff: todos os relatos
+router.get('/:id', autenticarToken, staff, obterRelato);
+router.get('/:id/correspondencias', autenticarToken, staff, listarCorrespondencias);
 
 export default router;

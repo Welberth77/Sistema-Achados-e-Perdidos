@@ -10,6 +10,9 @@ import dashboardRouter from './routes/dashboardRoutes.js';
 import usuariosRouter from './routes/usuariosRoutes.js';
 import relatosRouter from './routes/relatosRoutes.js';
 import itensRouter from './routes/itensRoutes.js';
+import registradoresRouter from './routes/registradoresRoutes.js';
+import categoriasRouter from './routes/categoriasRoutes.js';
+import publicoRouter from './routes/publicoRoutes.js';
 
 const app = express();
 
@@ -21,6 +24,7 @@ app.use(morgan('dev'));
 // Rotas da API
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/publico', publicoRouter);
 app.use('/api/custodia', custodiaRouter);
 app.use('/api/devolucoes', devolucaoRouter);
 app.use('/api/casos', casosRouter);
@@ -28,6 +32,8 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/relatos', relatosRouter);
 app.use('/api/itens', itensRouter);
+app.use('/api/registradores', registradoresRouter);
+app.use('/api/categorias', categoriasRouter);
 
 // Rota não encontrada (404)
 app.use((req, res) => {

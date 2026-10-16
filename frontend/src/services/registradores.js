@@ -2,7 +2,7 @@ import api from './api.js';
 
 // Enquanto o backend não entrega os endpoints, use o mock.
 // Quando estiver pronto, troque para false.
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // --- dados fake em memória (mesmos campos do contrato/banco) ---
 // registrador: { id, nome, vinculo, matricula, tipo_documento, documento,

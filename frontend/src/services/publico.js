@@ -2,7 +2,7 @@ import api from './api.js';
 
 // Catálogo PÚBLICO: só o mínimo para alguém reconhecer que o item pode estar guardado.
 // Detalhes completos exigem login — evita que um falso reclamante use os detalhes como "prova".
-const USE_MOCK = true;
+const USE_MOCK = false;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export const CATEGORIAS_PUBLICAS = [
