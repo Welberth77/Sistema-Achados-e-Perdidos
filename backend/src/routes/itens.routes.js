@@ -1,5 +1,5 @@
 import express from 'express';
-// Importa o pool de conexão com o PostgreSQL utilizando db.js e a extensão .js
+// Importa o pool de conexão com o PostgreSQL
 import pool from '../config/db.js'; 
 
 const router = express.Router();
