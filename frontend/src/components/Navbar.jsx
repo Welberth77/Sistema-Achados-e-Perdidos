@@ -1,5 +1,6 @@
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import LogoutButton from './LogoutButton.jsx';
 
 function IconeSol() {
   return (
@@ -18,7 +19,7 @@ function IconeLua() {
 }
 
 export default function Navbar() {
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
   const { escuro, alternar } = useTheme();
   const inicial = (usuario?.nome || 'U').charAt(0).toUpperCase();
 
@@ -42,12 +43,7 @@ export default function Navbar() {
         <span className="hidden text-sm font-medium text-fg sm:inline">{usuario?.nome || 'Usuário'}</span>
       </div>
 
-      <button
-        onClick={logout}
-        className="ml-1 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        Sair
-      </button>
+      <LogoutButton className="ml-1" />
     </header>
   );
 }

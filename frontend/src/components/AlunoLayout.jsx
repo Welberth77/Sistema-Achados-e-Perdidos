@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import LogoutButton from './LogoutButton.jsx';
 
 function IconeSol() {
   return (
@@ -25,7 +26,7 @@ const links = [
 ];
 
 export default function AlunoLayout() {
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
   const { escuro, alternar } = useTheme();
   const navigate = useNavigate();
 
@@ -67,12 +68,7 @@ export default function AlunoLayout() {
               {escuro ? <IconeSol /> : <IconeLua />}
             </button>
             <span className="mx-1 hidden text-sm font-medium text-fg sm:inline">{usuario?.nome || 'Usuário'}</span>
-            <button
-              onClick={logout}
-              className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              Sair
-            </button>
+            <LogoutButton />
           </div>
         </div>
         {/* nav em telas pequenas */}
