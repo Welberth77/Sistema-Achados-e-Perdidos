@@ -1,7 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
-import Button from './Button.jsx';
 
 function IconeSol() {
   return (
@@ -19,7 +18,7 @@ function IconeLua() {
   );
 }
 
-// Layout das páginas públicas (sem login): cabeçalho simples + conteúdo + rodapé.
+// Layout das páginas públicas (sem login): cabeçalho destacado + conteúdo + rodapé.
 export default function PublicLayout() {
   const { autenticado, usuario } = useAuth();
   const { escuro, alternar } = useTheme();
@@ -27,36 +26,49 @@ export default function PublicLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
-      <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-black/10 bg-primary text-primary-fg dark:border-white/10">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link
             to="/"
-            className="flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex items-center gap-2 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-fg">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-white/15 text-xs font-bold text-white">
               AP
             </span>
             <span className="text-sm font-semibold">Achados &amp; Perdidos</span>
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={alternar}
               aria-label={escuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
               aria-pressed={escuro}
-              className="grid h-9 w-9 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="grid h-9 w-9 place-items-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               {escuro ? <IconeSol /> : <IconeLua />}
             </button>
-            <div className="mx-1.5 h-6 w-px bg-border" aria-hidden="true" />
+            <div className="mx-1 h-6 w-px bg-white/20" aria-hidden="true" />
             {autenticado ? (
-              <Button size="sm" onClick={() => navigate(usuario?.papel === 'USUARIO' ? '/inicio' : '/dashboard')}>
+              <button
+                onClick={() => navigate(usuario?.papel === 'USUARIO' ? '/inicio' : '/dashboard')}
+                className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              >
                 {usuario?.papel === 'USUARIO' ? 'Minha área' : 'Ir para o painel'}
-              </Button>
+              </button>
             ) : (
               <>
-                <Button size="sm" variant="ghost" onClick={() => navigate('/login')}>Entrar</Button>
-                <Button size="sm" onClick={() => navigate('/cadastro')}>Criar conta</Button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                >
+                  Entrar
+                </button>
+                <button
+                  onClick={() => navigate('/cadastro')}
+                  className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                >
+                  Criar conta
+                </button>
               </>
             )}
           </div>

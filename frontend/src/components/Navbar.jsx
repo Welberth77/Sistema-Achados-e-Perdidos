@@ -24,23 +24,23 @@ export default function Navbar() {
   const inicial = (usuario?.nome || 'U').charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-end gap-1 border-b border-border bg-surface/90 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-end gap-1 border-b border-black/10 bg-primary px-4 text-primary-fg dark:border-white/10 sm:px-6">
       <button
         onClick={alternar}
         aria-label={escuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
         aria-pressed={escuro}
-        className="grid h-9 w-9 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="grid h-9 w-9 place-items-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
       >
         {escuro ? <IconeSol /> : <IconeLua />}
       </button>
 
-      <div className="mx-1.5 h-6 w-px bg-border" aria-hidden="true" />
+      <div className="mx-1.5 h-6 w-px bg-white/20" aria-hidden="true" />
 
       <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-soft text-xs font-bold text-link">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-white/15 text-xs font-bold text-white">
           {inicial}
         </span>
-        <span className="hidden text-sm font-medium text-fg sm:inline">{usuario?.nome || 'Usuário'}</span>
+        <span className="hidden text-sm font-medium text-white sm:inline">{usuario?.nome || 'Usuário'}</span>
       </div>
 
       <LogoutButton className="ml-1" />

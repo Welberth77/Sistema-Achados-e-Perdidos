@@ -13,7 +13,7 @@ export default function LogoutButton({ className = '' }) {
       <button
         type="button"
         onClick={() => setConfirmando(true)}
-        className={`rounded-md px-2.5 py-1.5 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-400 dark:hover:bg-rose-400/10 ${className}`}
+        className={`rounded-md bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-rose-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${className}`}
       >
         Sair
       </button>

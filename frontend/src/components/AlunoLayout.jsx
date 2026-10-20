@@ -32,13 +32,13 @@ export default function AlunoLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
-      <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-black/10 bg-primary text-primary-fg dark:border-white/10">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
           <button
             onClick={() => navigate('/inicio')}
-            className="flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex items-center gap-2 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-fg">AP</span>
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-white/15 text-xs font-bold text-white">AP</span>
             <span className="text-sm font-semibold">Achados &amp; Perdidos</span>
           </button>
 
@@ -48,8 +48,8 @@ export default function AlunoLayout() {
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isActive ? 'bg-primary-soft text-link' : 'text-muted hover:bg-surface-2 hover:text-fg'
+                  `rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
+                    isActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`
                 }
               >
@@ -63,22 +63,22 @@ export default function AlunoLayout() {
               onClick={alternar}
               aria-label={escuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
               aria-pressed={escuro}
-              className="grid h-9 w-9 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="grid h-9 w-9 place-items-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               {escuro ? <IconeSol /> : <IconeLua />}
             </button>
-            <span className="mx-1 hidden text-sm font-medium text-fg sm:inline">{usuario?.nome || 'Usuário'}</span>
+            <span className="mx-1 hidden text-sm font-medium text-white sm:inline">{usuario?.nome || 'Usuário'}</span>
             <LogoutButton />
           </div>
         </div>
         {/* nav em telas pequenas */}
-        <nav aria-label="Navegação" className="flex gap-1 border-t border-border px-4 py-2 sm:hidden">
+        <nav aria-label="Navegação" className="flex gap-1 border-t border-white/10 px-4 py-2 sm:hidden">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
-                `rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-primary-soft text-link' : 'text-muted'}`
+                `rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-white/20 text-white' : 'text-white/80'}`
               }
             >
               {l.label}
