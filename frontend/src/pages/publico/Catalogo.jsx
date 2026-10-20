@@ -1,101 +1,62 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listarCatalogoPublico, CATEGORIAS_PUBLICAS } from '../../services/publico.js';
-import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 
-function dataCurta(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR');
-}
+// Página pública (sem login): apresentação do sistema e chamada para entrar/criar conta.
+// Os itens em custódia NÃO são exibidos sem login — ficam só na área autenticada.
+const PASSOS = [
+  {
+    titulo: '1. Crie sua conta',
+    texto: 'Leva menos de um minuto. Use seu e-mail para acessar o sistema.',
+  },
+  {
+    titulo: '2. Veja o que foi encontrado',
+    texto: 'Após entrar, consulte os itens achados que estão guardados no campus.',
+  },
+  {
+    titulo: '3. Relate sua perda',
+    texto: 'Registre o que você perdeu e seja avisado quando algo parecido aparecer.',
+  },
+];
 
 export default function Catalogo() {
   const navigate = useNavigate();
-  const [itens, setItens] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [categoria, setCategoria] = useState('');
-
-  async function carregar() {
-    setLoading(true);
-    try {
-      setItens(await listarCatalogoPublico({ categoria }));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const catOptions = [
-    { value: '', label: 'Todas as categorias' },
-    ...CATEGORIAS_PUBLICAS.map((c) => ({ value: c, label: c })),
-  ];
 
   return (
     <div>
-      <div className="mb-8 max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">Perdeu algo no campus?</h1>
-        <p className="mt-2 text-muted">
-          Veja os itens que já foram encontrados e estão guardados. Para dizer que um item é seu e
-          ver os detalhes, entre ou crie uma conta.
+      <section className="mx-auto max-w-2xl text-center">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
+          Perdeu algo no campus?
+        </h1>
+        <p className="mt-3 text-muted">
+          Este é o sistema de achados e perdidos da instituição. Por segurança, os itens guardados
+          só podem ser consultados após entrar — assim evitamos que alguém reivindique um item que
+          não é seu.
         </p>
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-end gap-3">
-        <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
-        <Button variant="outline" onClick={carregar}>Filtrar</Button>
-      </div>
-
-      {loading ? (
-        <p className="text-muted">Carregando…</p>
-      ) : itens.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
-          Nenhum item encontrado nesta categoria.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {itens.map((it) => (
-            <article key={it.id} className="flex flex-col rounded-lg border border-border bg-surface p-4">
-              <span className="self-start rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
-                {it.categoria}
-              </span>
-              <dl className="mt-3 space-y-1 text-sm">
-                <div className="flex gap-2">
-                  <dt className="w-24 shrink-0 text-muted">Local</dt>
-                  <dd className="text-fg">{it.local}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="w-24 shrink-0 text-muted">Encontrado</dt>
-                  <dd className="tabular-nums text-fg">{dataCurta(it.data)}</dd>
-                </div>
-              </dl>
-              <div className="mt-4 border-t border-border pt-3">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="text-sm font-medium text-link underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
-                >
-                  É meu? Entrar para ver detalhes
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-10 rounded-lg border border-border bg-surface p-6 text-center">
-        <p className="font-medium text-fg">Não encontrou seu item?</p>
-        <p className="mx-auto mt-1 max-w-md text-sm text-muted">
-          Crie uma conta e registre um relato de perda — você é avisado se algo parecido for encontrado.
-        </p>
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Button onClick={() => navigate('/cadastro')}>Criar conta</Button>
           <Button variant="outline" onClick={() => navigate('/login')}>Já tenho conta</Button>
         </div>
-      </div>
+      </section>
+
+      <section className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
+        {PASSOS.map((p) => (
+          <div key={p.titulo} className="rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-sm font-semibold text-fg">{p.titulo}</h2>
+            <p className="mt-1.5 text-sm text-muted">{p.texto}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="mx-auto mt-10 max-w-2xl rounded-lg border border-border bg-surface p-6 text-center">
+        <p className="font-medium text-fg">Trabalha na equipe de achados e perdidos?</p>
+        <p className="mx-auto mt-1 max-w-md text-sm text-muted">
+          Entre com sua conta institucional para cadastrar itens, acompanhar relatos e gerenciar as
+          devoluções.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <Button variant="outline" onClick={() => navigate('/login')}>Entrar no painel</Button>
+        </div>
+      </section>
     </div>
   );
 }
