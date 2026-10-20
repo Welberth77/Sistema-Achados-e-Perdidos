@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { criarRelato } from '../../services/meusRelatos.js';
 import Input from '../../components/Input.jsx';
 import Button from '../../components/Button.jsx';
+import { noMax, dataPlausivel, hojeISO, LIM } from '../../utils/validacao.js';
 
 export default function RelatarPerda() {
   const navigate = useNavigate();
@@ -16,6 +17,10 @@ export default function RelatarPerda() {
   function validar() {
     const e = {};
     if (!form.titulo.trim()) e.titulo = 'Diga o que você perdeu.';
+    else if (!noMax(form.titulo, LIM.titulo)) e.titulo = `Máximo de ${LIM.titulo} caracteres.`;
+    if (!noMax(form.descricao, LIM.descricao)) e.descricao = `Máximo de ${LIM.descricao} caracteres.`;
+    if (!noMax(form.local_perda, LIM.local)) e.local_perda = `Máximo de ${LIM.local} caracteres.`;
+    if (!dataPlausivel(form.data_perda)) e.data_perda = 'Data inválida (não pode ser futura).';
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -56,13 +61,13 @@ export default function RelatarPerda() {
       <form onSubmit={enviar} className="rounded-lg border border-border bg-surface p-5 sm:p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Input label="O que você perdeu?" required placeholder="Ex.: Mochila preta" value={form.titulo} error={erros.titulo} onChange={(e) => set('titulo', e.target.value)} />
+            <Input label="O que você perdeu?" required placeholder="Ex.: Mochila preta" value={form.titulo} error={erros.titulo} maxLength={LIM.titulo} onChange={(e) => set('titulo', e.target.value)} />
           </div>
           <div className="sm:col-span-2">
-            <Input label="Descrição" placeholder="Cor, marca, detalhes que ajudem a identificar" value={form.descricao} onChange={(e) => set('descricao', e.target.value)} />
+            <Input label="Descrição" placeholder="Cor, marca, detalhes que ajudem a identificar" value={form.descricao} error={erros.descricao} maxLength={LIM.descricao} onChange={(e) => set('descricao', e.target.value)} />
           </div>
-          <Input label="Onde perdeu" placeholder="Ex.: Biblioteca" value={form.local_perda} onChange={(e) => set('local_perda', e.target.value)} />
-          <Input label="Quando" type="date" value={form.data_perda} onChange={(e) => set('data_perda', e.target.value)} />
+          <Input label="Onde perdeu" placeholder="Ex.: Biblioteca" value={form.local_perda} error={erros.local_perda} maxLength={LIM.local} onChange={(e) => set('local_perda', e.target.value)} />
+          <Input label="Quando" type="date" value={form.data_perda} error={erros.data_perda} max={hojeISO()} onChange={(e) => set('data_perda', e.target.value)} />
         </div>
 
         <div className="mt-6 flex gap-2">

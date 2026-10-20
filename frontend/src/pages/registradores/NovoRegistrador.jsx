@@ -4,6 +4,7 @@ import { criarRegistrador } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
+import { emailValido, telefoneValido, documentoValido, noMax, LIM } from '../../utils/validacao.js';
 
 const VINCULOS = ['ALUNO', 'DOCENTE', 'TERCEIRIZADO', 'SERVIDOR', 'OUTRO'];
 const VINCULO_LABEL = {
@@ -38,7 +39,19 @@ export default function NovoRegistrador() {
   function validar() {
     const e = {};
     if (!form.nome.trim()) e.nome = 'Informe o nome.';
+    else if (!noMax(form.nome, LIM.nome)) e.nome = `Máximo de ${LIM.nome} caracteres.`;
     if (!form.vinculo) e.vinculo = 'Selecione o vínculo.';
+    if (!noMax(form.matricula, LIM.matricula)) e.matricula = `Máximo de ${LIM.matricula} caracteres.`;
+    if (!documentoValido(form.tipo_documento, form.documento)) {
+      e.documento = form.tipo_documento === 'CPF' ? 'CPF deve ter 11 dígitos.' : 'Documento inválido.';
+    } else if (!noMax(form.documento, LIM.documento)) {
+      e.documento = `Máximo de ${LIM.documento} caracteres.`;
+    }
+    if (!telefoneValido(form.telefone)) e.telefone = 'Telefone inválido.';
+    else if (!noMax(form.telefone, LIM.telefone)) e.telefone = `Máximo de ${LIM.telefone} caracteres.`;
+    if (form.email.trim() && !emailValido(form.email)) e.email = 'E-mail inválido.';
+    else if (!noMax(form.email, LIM.email)) e.email = `Máximo de ${LIM.email} caracteres.`;
+    if (!noMax(form.observacoes, LIM.observacoes)) e.observacoes = `Máximo de ${LIM.observacoes} caracteres.`;
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -79,7 +92,7 @@ export default function NovoRegistrador() {
 
       <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
         <div className="space-y-4">
-          <Input label="Nome" required value={form.nome} error={erros.nome} onChange={(e) => set('nome', e.target.value)} />
+          <Input label="Nome" required value={form.nome} error={erros.nome} maxLength={LIM.nome} onChange={(e) => set('nome', e.target.value)} />
 
           <Select
             label="Vínculo"
@@ -94,7 +107,7 @@ export default function NovoRegistrador() {
             ))}
           </Select>
 
-          <Input label="Matrícula / SIAPE" value={form.matricula} onChange={(e) => set('matricula', e.target.value)} />
+          <Input label="Matrícula / SIAPE" value={form.matricula} error={erros.matricula} maxLength={LIM.matricula} onChange={(e) => set('matricula', e.target.value)} />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Select
@@ -104,15 +117,15 @@ export default function NovoRegistrador() {
               value={form.tipo_documento}
               onChange={(e) => set('tipo_documento', e.target.value)}
             />
-            <Input label="Documento" value={form.documento} error={erros.documento} onChange={(e) => set('documento', e.target.value)} />
+            <Input label="Documento" value={form.documento} error={erros.documento} maxLength={LIM.documento} onChange={(e) => set('documento', e.target.value)} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Telefone" value={form.telefone} onChange={(e) => set('telefone', e.target.value)} />
-            <Input label="E-mail" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+            <Input label="Telefone" value={form.telefone} error={erros.telefone} maxLength={LIM.telefone} onChange={(e) => set('telefone', e.target.value)} />
+            <Input label="E-mail" type="email" value={form.email} error={erros.email} maxLength={LIM.email} onChange={(e) => set('email', e.target.value)} />
           </div>
 
-          <Input label="Observações" value={form.observacoes} onChange={(e) => set('observacoes', e.target.value)} />
+          <Input label="Observações" value={form.observacoes} error={erros.observacoes} maxLength={LIM.observacoes} onChange={(e) => set('observacoes', e.target.value)} />
         </div>
 
         <div className="mt-6 flex gap-2">

@@ -4,7 +4,7 @@ import api from '../services/api.js';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
-import { emailValido } from '../utils/validacao.js';
+import { emailValido, noMax, LIM } from '../utils/validacao.js';
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -19,9 +19,12 @@ export default function Cadastro() {
   function validar() {
     const e = {};
     if (!form.nome.trim()) e.nome = 'Informe seu nome.';
+    else if (!noMax(form.nome, LIM.nome)) e.nome = `Nome muito longo (máx. ${LIM.nome}).`;
     if (!form.email.trim()) e.email = 'Informe seu e-mail.';
     else if (!emailValido(form.email)) e.email = 'E-mail inválido.';
+    else if (!noMax(form.email, LIM.email)) e.email = `E-mail muito longo (máx. ${LIM.email}).`;
     if (form.senha.length < 6) e.senha = 'A senha deve ter ao menos 6 caracteres.';
+    else if (!noMax(form.senha, LIM.senha)) e.senha = `Senha muito longa (máx. ${LIM.senha}).`;
     if (form.confirmar !== form.senha) e.confirmar = 'As senhas não coincidem.';
     setErros(e);
     return Object.keys(e).length === 0;
@@ -97,10 +100,10 @@ export default function Cadastro() {
         )}
 
         <form onSubmit={enviar} className="mt-6 space-y-4">
-          <Input label="Nome" value={form.nome} error={erros.nome} onChange={(e) => set('nome', e.target.value)} required />
-          <Input label="E-mail" type="email" autoComplete="email" value={form.email} error={erros.email} onChange={(e) => set('email', e.target.value)} required />
-          <Input label="Senha" type="password" autoComplete="new-password" value={form.senha} error={erros.senha} onChange={(e) => set('senha', e.target.value)} required />
-          <Input label="Confirmar senha" type="password" autoComplete="new-password" value={form.confirmar} error={erros.confirmar} onChange={(e) => set('confirmar', e.target.value)} required />
+          <Input label="Nome" value={form.nome} error={erros.nome} onChange={(e) => set('nome', e.target.value)} maxLength={LIM.nome} required />
+          <Input label="E-mail" type="email" autoComplete="email" value={form.email} error={erros.email} onChange={(e) => set('email', e.target.value)} maxLength={LIM.email} required />
+          <Input label="Senha" type="password" autoComplete="new-password" value={form.senha} error={erros.senha} onChange={(e) => set('senha', e.target.value)} maxLength={LIM.senha} required />
+          <Input label="Confirmar senha" type="password" autoComplete="new-password" value={form.confirmar} error={erros.confirmar} onChange={(e) => set('confirmar', e.target.value)} maxLength={LIM.senha} required />
           <Button type="submit" loading={enviando} className="w-full">Criar conta</Button>
         </form>
 

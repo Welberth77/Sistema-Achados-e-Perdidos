@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
-import { emailValido } from '../utils/validacao.js';
+import { emailValido, LIM } from '../utils/validacao.js';
 
 // O que o sistema faz — conteúdo real do painel institucional.
 const DESTAQUES = [
@@ -118,6 +118,7 @@ export default function Login() {
               type="email"
               autoComplete="username"
               placeholder="voce@achados.local"
+              maxLength={LIM.email}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={erros.email}
@@ -127,6 +128,7 @@ export default function Login() {
               label="Senha"
               type="password"
               autoComplete="current-password"
+              maxLength={LIM.senha}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               error={erros.senha}

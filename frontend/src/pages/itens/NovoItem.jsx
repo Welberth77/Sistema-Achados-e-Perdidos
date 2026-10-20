@@ -6,6 +6,7 @@ import { listarRegistradores } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
+import { noMax, dataPlausivel, hojeISO, LIM } from '../../utils/validacao.js';
 
 export default function NovoItem() {
   const navigate = useNavigate();
@@ -35,9 +36,15 @@ export default function NovoItem() {
   function validar() {
     const e = {};
     if (!form.titulo.trim()) e.titulo = 'Informe o título.';
+    else if (!noMax(form.titulo, LIM.titulo)) e.titulo = `Máximo de ${LIM.titulo} caracteres.`;
+    if (!noMax(form.descricao, LIM.descricao)) e.descricao = `Máximo de ${LIM.descricao} caracteres.`;
+    if (!noMax(form.cor, LIM.cor)) e.cor = `Máximo de ${LIM.cor} caracteres.`;
+    if (!noMax(form.marca, LIM.marca)) e.marca = `Máximo de ${LIM.marca} caracteres.`;
     if (!form.categoria_id) e.categoria_id = 'Selecione a categoria.';
     if (!form.local_encontrado.trim()) e.local_encontrado = 'Informe o local onde foi encontrado.';
+    else if (!noMax(form.local_encontrado, LIM.local)) e.local_encontrado = `Máximo de ${LIM.local} caracteres.`;
     if (!form.data_encontrado) e.data_encontrado = 'Informe a data.';
+    else if (!dataPlausivel(form.data_encontrado)) e.data_encontrado = 'Data inválida (não pode ser futura).';
     if (!form.registrador_id) e.registrador_id = 'Selecione o registrador.';
     setErros(e);
     return Object.keys(e).length === 0;
@@ -84,10 +91,10 @@ export default function NovoItem() {
       <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Input label="Título" required value={form.titulo} error={erros.titulo} onChange={(e) => set('titulo', e.target.value)} />
+            <Input label="Título" required value={form.titulo} error={erros.titulo} maxLength={LIM.titulo} onChange={(e) => set('titulo', e.target.value)} />
           </div>
           <div className="sm:col-span-2">
-            <Input label="Descrição" value={form.descricao} onChange={(e) => set('descricao', e.target.value)} />
+            <Input label="Descrição" value={form.descricao} error={erros.descricao} maxLength={LIM.descricao} onChange={(e) => set('descricao', e.target.value)} />
           </div>
 
           <Select
@@ -118,10 +125,10 @@ export default function NovoItem() {
             ))}
           </Select>
 
-          <Input label="Cor" value={form.cor} onChange={(e) => set('cor', e.target.value)} />
-          <Input label="Marca" value={form.marca} onChange={(e) => set('marca', e.target.value)} />
-          <Input label="Local encontrado" required value={form.local_encontrado} error={erros.local_encontrado} onChange={(e) => set('local_encontrado', e.target.value)} />
-          <Input label="Data encontrado" type="date" required value={form.data_encontrado} error={erros.data_encontrado} onChange={(e) => set('data_encontrado', e.target.value)} />
+          <Input label="Cor" value={form.cor} error={erros.cor} maxLength={LIM.cor} onChange={(e) => set('cor', e.target.value)} />
+          <Input label="Marca" value={form.marca} error={erros.marca} maxLength={LIM.marca} onChange={(e) => set('marca', e.target.value)} />
+          <Input label="Local encontrado" required value={form.local_encontrado} error={erros.local_encontrado} maxLength={LIM.local} onChange={(e) => set('local_encontrado', e.target.value)} />
+          <Input label="Data encontrado" type="date" required value={form.data_encontrado} error={erros.data_encontrado} max={hojeISO()} onChange={(e) => set('data_encontrado', e.target.value)} />
         </div>
 
         <div className="mt-6 flex gap-2">

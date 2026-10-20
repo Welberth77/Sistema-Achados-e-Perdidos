@@ -6,6 +6,7 @@ import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
+import { hojeISO, LIM } from '../../utils/validacao.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 
 const STATUS = [
@@ -76,6 +77,7 @@ export default function Consulta() {
             <Input
               label="Termo"
               placeholder="Título ou descrição…"
+              maxLength={LIM.termo}
               value={filtros.q}
               onChange={(e) => set('q', e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && buscar()}
@@ -109,12 +111,14 @@ export default function Consulta() {
             type="date"
             value={filtros.data_inicio}
             onChange={(e) => set('data_inicio', e.target.value)}
+            max={hojeISO()}
           />
           <Input
             label="Encontrado até"
             type="date"
             value={filtros.data_fim}
             onChange={(e) => set('data_fim', e.target.value)}
+            max={hojeISO()}
           />
         </div>
 

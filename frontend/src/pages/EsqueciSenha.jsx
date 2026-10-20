@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { emailValido } from '../utils/validacao.js';
+import { emailValido, LIM } from '../utils/validacao.js';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
@@ -75,6 +75,7 @@ export default function EsqueciSenha() {
                 type="email"
                 autoComplete="email"
                 placeholder="voce@achados.local"
+                maxLength={LIM.email}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
