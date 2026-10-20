@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+// Importa o pool de conexão com o PostgreSQL utilizando db.js e a extensão .js
+import pool from '../config/db.js'; 
+
 const router = express.Router();
-// Importa o teu pool de conexão com o PostgreSQL
-const pool = require('../config/database'); 
 
 // GET /api/itens - Lista todos os itens achados
 router.get('/', async (req, res) => {
@@ -34,4 +35,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
