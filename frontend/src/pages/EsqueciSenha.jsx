@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { emailValido } from '../utils/validacao.js';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function EsqueciSenha() {
   const [email, setEmail] = useState('');
@@ -32,7 +33,8 @@ export default function EsqueciSenha() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+      <ThemeToggle className="absolute right-4 top-4 z-20" />
       <div className="w-full max-w-sm">
         <Link
           to="/"

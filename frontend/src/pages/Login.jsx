@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 import { emailValido } from '../utils/validacao.js';
 
 // O que o sistema faz — conteúdo real do painel institucional.
@@ -53,7 +54,8 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-screen bg-bg lg:grid-cols-2">
+    <div className="relative grid min-h-screen bg-bg lg:grid-cols-2">
+      <ThemeToggle className="absolute right-4 top-4 z-20" />
       {/* Painel institucional (lado esquerdo) */}
       <section className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-white lg:flex">
         <div className="flex items-center gap-2">

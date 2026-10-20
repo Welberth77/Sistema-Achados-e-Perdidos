@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api.js';
 import Input from '../components/Input.jsx';
 import Button from '../components/Button.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 import { emailValido } from '../utils/validacao.js';
 
 export default function Cadastro() {
@@ -54,7 +55,8 @@ export default function Cadastro() {
 
   if (ok) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg px-4">
+      <div className="relative flex min-h-screen items-center justify-center bg-bg px-4">
+      <ThemeToggle className="absolute right-4 top-4 z-20" />
         <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-6 text-center">
           <h1 className="text-xl font-semibold text-fg">Conta criada</h1>
           <p className="mt-2 text-sm text-muted">
@@ -69,7 +71,8 @@ export default function Cadastro() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+      <ThemeToggle className="absolute right-4 top-4 z-20" />
       <div className="w-full max-w-sm">
         <Link
           to="/"
