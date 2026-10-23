@@ -58,6 +58,52 @@ export async function obterCaso(req, res) {
   }
 }
 
+// POST /api/casos — abre um caso ligando um item achado a um relato (UC-07).
+export async function criarCaso(req, res) {
+  const { item_achado_id, relato_perda_id, descricao } = req.body;
+  const usuario_id = req.usuario ? req.usuario.id : null;
+
+  if (!item_achado_id) {
+    return res.status(422).json({ error: 'Informe o item achado do caso.' });
+  }
+
+  const ano = new Date().getFullYear();
+  try {
+    const item = await pool.query('SELECT id FROM itens_achados WHERE id = $1', [item_achado_id]);
+    if (item.rowCount === 0) {
+      return res.status(404).json({ error: 'Item não encontrado.' });
+    }
+
+    for (let tentativa = 0; tentativa < 5; tentativa++) {
+      const { rows: cnt } = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM casos WHERE codigo LIKE $1`,
+        [`CASO-${ano}-%`]
+      );
+      const seq = cnt[0].n + 1 + tentativa;
+      const codigo = `CASO-${ano}-${String(seq).padStart(4, '0')}`;
+      try {
+        const { rows } = await pool.query(
+          `INSERT INTO casos
+             (codigo, item_achado_id, relato_perda_id, responsavel_id, status, descricao, criado_por)
+           VALUES ($1, $2, $3, $4, 'ABERTO', $5, $4)
+           RETURNING id`,
+          [codigo, item_achado_id, relato_perda_id || null, usuario_id, descricao || null]
+        );
+        const { rows: full } = await pool.query(`${SELECT_CASO} WHERE c.id = $1`, [rows[0].id]);
+        return res.status(201).json(mapCaso(full[0]));
+      } catch (e) {
+        if (e.code === '23505' && tentativa < 4) continue; // colisão de código -> tenta o próximo
+        if (e.code === '23503') return res.status(422).json({ error: 'Item ou relato inexistente.' });
+        throw e;
+      }
+    }
+    return res.status(500).json({ error: 'Não foi possível gerar o código do caso.' });
+  } catch (err) {
+    console.error('Erro ao criar caso:', err);
+    return res.status(500).json({ error: 'Erro interno ao criar caso.' });
+  }
+}
+
 // PATCH /api/casos/:id/encerrar
 export async function encerrarCaso(req, res) {
   const { id } = req.params;

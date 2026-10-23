@@ -39,6 +39,7 @@ let mockData = [
     data_encerramento: '2026-10-03T10:00:00',
   },
 ];
+let nextId = 3;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function listarCasos({ status = '' } = {}) {
@@ -62,5 +63,46 @@ export async function obterCaso(id) {
     return { ...caso };
   }
   const { data } = await api.get(`/casos/${id}`);
+  return data;
+}
+
+// Abre um caso ligando um item achado a um relato (UC-07).
+// Backend: POST /api/casos -> { item_achado_id, relato_perda_id?, descricao? }
+export async function criarCaso({ item_achado_id, relato_perda_id, descricao }) {
+  if (USE_MOCK) {
+    await delay(300);
+    const novo = {
+      id: nextId++,
+      codigo: `CASO-2026-${String(nextId).padStart(4, '0')}`,
+      item_achado_id: Number(item_achado_id),
+      relato_perda_id: relato_perda_id ? Number(relato_perda_id) : null,
+      status: 'ABERTO',
+      descricao: descricao || null,
+      data_abertura: new Date().toISOString(),
+      data_encerramento: null,
+    };
+    mockData.push(novo);
+    return novo;
+  }
+  const { data } = await api.post('/casos', {
+    item_achado_id: Number(item_achado_id),
+    relato_perda_id: relato_perda_id ? Number(relato_perda_id) : null,
+    descricao: descricao || undefined,
+  });
+  return data;
+}
+
+// Encerra um caso (UC-07). Backend: PATCH /api/casos/:id/encerrar
+export async function encerrarCaso(id) {
+  if (USE_MOCK) {
+    await delay(300);
+    const caso = mockData.find((c) => String(c.id) === String(id));
+    if (caso) {
+      caso.status = 'ENCERRADO';
+      caso.data_encerramento = new Date().toISOString();
+    }
+    return { caso };
+  }
+  const { data } = await api.patch(`/casos/${id}/encerrar`);
   return data;
 }
