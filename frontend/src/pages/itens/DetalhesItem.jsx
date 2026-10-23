@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { obterItem } from '../../services/itens.js';
+import { registrarCustodia } from '../../services/custodia.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Button from '../../components/Button.jsx';
+import Modal from '../../components/Modal.jsx';
+import Input from '../../components/Input.jsx';
+import Select from '../../components/Select.jsx';
+import { noMax, LIM } from '../../utils/validacao.js';
 
 function Linha({ rotulo, valor }) {
   return (
@@ -28,13 +33,60 @@ export default function DetalhesItem() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
 
-  useEffect(() => {
+  // Modal de registrar custódia
+  const [modalAberto, setModalAberto] = useState(false);
+  const [custForm, setCustForm] = useState({ tipo: 'ENTRADA', local_guarda: '', observacoes: '' });
+  const [custErros, setCustErros] = useState({});
+  const [custEnviando, setCustEnviando] = useState(false);
+  const [custErroGeral, setCustErroGeral] = useState('');
+
+  function carregar() {
     setLoading(true);
     obterItem(id)
       .then(setItem)
       .catch(() => setErro('Item não encontrado.'))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  function abrirModal() {
+    setCustForm({ tipo: 'ENTRADA', local_guarda: '', observacoes: '' });
+    setCustErros({});
+    setCustErroGeral('');
+    setModalAberto(true);
+  }
+
+  const setCust = (campo, valor) => setCustForm((f) => ({ ...f, [campo]: valor }));
+
+  async function salvarCustodia() {
+    setCustErroGeral('');
+    const e = {};
+    if (!custForm.local_guarda.trim()) e.local_guarda = 'Informe o local de guarda.';
+    else if (!noMax(custForm.local_guarda, LIM.local)) e.local_guarda = `Máximo de ${LIM.local} caracteres.`;
+    if (!noMax(custForm.observacoes, LIM.observacoes)) e.observacoes = `Máximo de ${LIM.observacoes} caracteres.`;
+    setCustErros(e);
+    if (Object.keys(e).length) return;
+
+    setCustEnviando(true);
+    try {
+      await registrarCustodia({
+        item_id: id,
+        tipo: custForm.tipo,
+        local_guarda: custForm.local_guarda.trim(),
+        observacoes: custForm.observacoes.trim(),
+      });
+      setModalAberto(false);
+      carregar(); // atualiza "custódia atual" e o histórico
+    } catch (err) {
+      setCustErroGeral(err.response?.data?.error || 'Não foi possível registrar a custódia.');
+    } finally {
+      setCustEnviando(false);
+    }
+  }
 
   if (loading) return <p className="text-muted">Carregando…</p>;
   if (erro)
@@ -47,7 +99,7 @@ export default function DetalhesItem() {
 
   const custodias = item.custodias || [];
   const atual = custodias[0];
-  const podeDevolver = item.status !== 'DEVOLVIDO' && item.status !== 'DESCARTADO';
+  const ativo = item.status !== 'DEVOLVIDO' && item.status !== 'DESCARTADO';
 
   return (
     <div className="max-w-3xl">
@@ -69,7 +121,12 @@ export default function DetalhesItem() {
       </section>
 
       <section className="mb-5 rounded-lg border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm font-semibold text-fg">Custódia atual</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-fg">Custódia atual</h2>
+          {ativo && (
+            <Button size="sm" variant="outline" onClick={abrirModal}>Registrar custódia</Button>
+          )}
+        </div>
         {atual ? (
           <>
             <Linha rotulo="Situação" valor={TIPO_CUSTODIA[atual.tipo] || atual.tipo} />
@@ -103,10 +160,59 @@ export default function DetalhesItem() {
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => navigate('/itens')}>Voltar</Button>
-        {podeDevolver && (
+        {ativo && (
           <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
         )}
       </div>
+
+      <Modal
+        open={modalAberto}
+        onClose={() => setModalAberto(false)}
+        title="Registrar custódia"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setModalAberto(false)}>Cancelar</Button>
+            <Button onClick={salvarCustodia} loading={custEnviando}>Salvar</Button>
+          </>
+        }
+      >
+        {custErroGeral && (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300"
+          >
+            {custErroGeral}
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-4">
+          <Select
+            label="Tipo"
+            required
+            className="w-full"
+            value={custForm.tipo}
+            onChange={(e) => setCust('tipo', e.target.value)}
+          >
+            <option value="ENTRADA">Entrada</option>
+            <option value="TRANSFERENCIA">Transferência</option>
+            <option value="SAIDA">Saída</option>
+          </Select>
+          <Input
+            label="Local de guarda"
+            required
+            value={custForm.local_guarda}
+            error={custErros.local_guarda}
+            maxLength={LIM.local}
+            onChange={(e) => setCust('local_guarda', e.target.value)}
+          />
+          <Input
+            label="Observações"
+            value={custForm.observacoes}
+            error={custErros.observacoes}
+            maxLength={LIM.observacoes}
+            onChange={(e) => setCust('observacoes', e.target.value)}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
