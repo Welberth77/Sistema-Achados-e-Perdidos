@@ -47,6 +47,7 @@ export default function DetalhesItem() {
 
   const custodias = item.custodias || [];
   const atual = custodias[0];
+  const podeDevolver = item.status !== 'DEVOLVIDO' && item.status !== 'DESCARTADO';
 
   return (
     <div className="max-w-3xl">
@@ -100,7 +101,12 @@ export default function DetalhesItem() {
         )}
       </section>
 
-      <Button variant="outline" onClick={() => navigate('/itens')}>Voltar</Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => navigate('/itens')}>Voltar</Button>
+        {podeDevolver && (
+          <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
+        )}
+      </div>
     </div>
   );
 }

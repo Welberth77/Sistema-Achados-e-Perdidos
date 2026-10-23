@@ -17,6 +17,7 @@ import NovoRegistrador from '../pages/registradores/NovoRegistrador.jsx';
 import Itens from '../pages/itens/Itens.jsx';
 import NovoItem from '../pages/itens/NovoItem.jsx';
 import DetalhesItem from '../pages/itens/DetalhesItem.jsx';
+import DevolverItem from '../pages/itens/DevolverItem.jsx';
 import Relatos from '../pages/relatos/Relatos.jsx';
 import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
@@ -66,6 +67,7 @@ export default function AppRoutes() {
         <Route path="/itens" element={<Itens />} />
         <Route path="/itens/novo" element={<NovoItem />} />
         <Route path="/itens/:id" element={<DetalhesItem />} />
+        <Route path="/itens/:id/devolver" element={<DevolverItem />} />
 
         <Route path="/relatos" element={<Relatos />} />
         <Route path="/relatos/:id" element={<DetalhesRelato />} />
