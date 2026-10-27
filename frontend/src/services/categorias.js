@@ -2,7 +2,7 @@ import api from './api.js';
 
 // Enquanto o backend não entrega os endpoints, use o mock.
 // Quando estiver pronto, troque para false.
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // Categorias iniciais — mesmas do seed.sql do banco.
 let mockData = [

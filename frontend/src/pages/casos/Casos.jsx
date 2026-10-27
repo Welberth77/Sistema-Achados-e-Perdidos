@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { listarCasos } from '../../services/casos.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
+import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 
-// valores iguais ao enum casos.status do banco
 const STATUS = [
   { value: '', label: 'Todos os status' },
   { value: 'ABERTO', label: 'Aberto' },
@@ -43,30 +43,25 @@ export default function Casos() {
   }, []);
 
   const colunas = [
-    { key: 'codigo', header: 'Código' },
-    { key: 'item', header: 'Item', render: (row) => row.item ? `${row.item.codigo} — ${row.item.titulo}` : '—' },
+    { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
+    { key: 'item', header: 'Item', render: (row) => (row.item ? `${row.item.codigo} — ${row.item.titulo}` : '—') },
     { key: 'responsavel', header: 'Responsável', render: (row) => row.responsavel?.nome || '—' },
-    { key: 'data_abertura', header: 'Abertura', render: (row) => dataCurta(row.data_abertura) },
+    { key: 'data_abertura', header: 'Abertura', render: (row) => dataCurta(row.data_abertura), className: 'tabular-nums text-muted' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
   ];
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Casos</h1>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">Casos</h1>
+          <p className="mt-1 text-sm text-muted">Ocorrências que reúnem item, relato, custódia e devolução.</p>
+        </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-2">
-        <select
-          className="rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          {STATUS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <Button variant="secondary" onClick={carregar}>Filtrar</Button>
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
+        <Select label="Status" options={STATUS} value={status} onChange={(e) => setStatus(e.target.value)} />
+        <Button variant="outline" onClick={carregar}>Filtrar</Button>
       </div>
 
       <Table
@@ -74,6 +69,7 @@ export default function Casos() {
         data={dados}
         loading={loading}
         onRowClick={(row) => navigate(`/casos/${row.id}`)}
+        emptyMessage="Nenhum caso encontrado."
       />
     </div>
   );

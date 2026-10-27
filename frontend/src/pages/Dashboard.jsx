@@ -1,40 +1,40 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api.js';
+import { obterResumo } from '../services/dashboard.js';
 import CardEstatistica from '../components/CardEstatistica.jsx';
-import Button from '../components/Button.jsx';
-import StatusBadge from '../components/StatusBadge.jsx';
 
 export default function Dashboard() {
-  const [status, setStatus] = useState('verificando...');
+  const [resumo, setResumo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
-    api
-      .get('/health')
-      .then((res) => setStatus(res.data?.status === 'ok' ? 'conectado' : 'resposta inesperada'))
-      .catch(() => setStatus('sem conexão com o backend'));
+    obterResumo()
+      .then(setResumo)
+      .catch(() => setErro('Não foi possível carregar os números do painel.'))
+      .finally(() => setLoading(false));
   }, []);
+
+  const v = (n) => (loading ? '…' : (n ?? '—'));
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Dashboard</h1>
-      <p className="mb-6 text-sm text-gray-600">
-        Status do backend: <span className="font-semibold">{status}</span>
-      </p>
-
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <CardEstatistica titulo="Itens achados" valor="—" />
-        <CardEstatistica titulo="Em custódia" valor="—" />
-        <CardEstatistica titulo="Devolvidos" valor="—" />
-        <CardEstatistica titulo="Casos em aberto" valor="—" />
-        <CardEstatistica titulo="Casos encerrados" valor="—" />
+      <div className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted">Visão geral dos itens, custódia e casos.</p>
       </div>
 
-      {/* teste rápido dos componentes base */}
-      <div className="flex items-center gap-2">
-        <Button>Salvar</Button>
-        <Button variant="secondary">Cancelar</Button>
-        <Button variant="danger" loading>Excluir</Button>
-        <StatusBadge status="EM_CUSTODIA" />
+      {erro && (
+        <div role="alert" className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
+          {erro}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <CardEstatistica titulo="Itens achados" valor={v(resumo?.itens_achados)} />
+        <CardEstatistica titulo="Em custódia" valor={v(resumo?.em_custodia)} />
+        <CardEstatistica titulo="Devolvidos" valor={v(resumo?.devolvidos)} />
+        <CardEstatistica titulo="Casos em aberto" valor={v(resumo?.casos_abertos)} />
+        <CardEstatistica titulo="Casos encerrados" valor={v(resumo?.casos_encerrados)} />
       </div>
     </div>
   );

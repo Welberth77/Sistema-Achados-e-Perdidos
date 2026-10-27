@@ -15,11 +15,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Tratamento central de respostas/erros (ex.: logout em 401 — a implementar).
+// Tratamento central de erros: sessão expirada (401) com token já existente
+// desloga e manda para o login. No próprio login (sem token ainda) não redireciona.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // if (error.response?.status === 401) { /* redirecionar para login */ }
+    const status = error.response?.status;
+    const tinhaToken = !!localStorage.getItem('token');
+    if (status === 401 && tinhaToken) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login');
+      }
+    }
     return Promise.reject(error);
   }
 );

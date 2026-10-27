@@ -4,9 +4,9 @@ import { listarRelatos } from '../../services/relatos.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
+import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 
-// valores iguais ao enum relatos_perda.status do banco
 const STATUS = [
   { value: '', label: 'Todos os status' },
   { value: 'ABERTO', label: 'Aberto' },
@@ -38,41 +38,36 @@ export default function Relatos() {
   }, []);
 
   const colunas = [
-    { key: 'codigo', header: 'Código' },
+    { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
     { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
     { key: 'local_perda', header: 'Local' },
-    { key: 'data_perda', header: 'Data' },
+    { key: 'data_perda', header: 'Data', className: 'tabular-nums text-muted' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
   ];
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Relatos de perda</h1>
-        {/* a tela de cadastro (/relatos/novo) é da outra parte do front */}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">Relatos de perda</h1>
+          <p className="mt-1 text-sm text-muted">Registros de itens que pessoas declararam ter perdido.</p>
+        </div>
         <Button onClick={() => navigate('/relatos/novo')}>Novo relato</Button>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-2">
-        <div className="w-72">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
+        <div className="min-w-56 flex-1">
           <Input
-            placeholder="Pesquisar por título ou descrição..."
+            label="Pesquisar"
+            placeholder="Título ou descrição…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && carregar()}
           />
         </div>
-        <select
-          className="rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          {STATUS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <Button variant="secondary" onClick={carregar}>Buscar</Button>
+        <Select label="Status" options={STATUS} value={status} onChange={(e) => setStatus(e.target.value)} />
+        <Button variant="outline" onClick={carregar}>Buscar</Button>
       </div>
 
       <Table
@@ -80,6 +75,7 @@ export default function Relatos() {
         data={dados}
         loading={loading}
         onRowClick={(row) => navigate(`/relatos/${row.id}`)}
+        emptyMessage="Nenhum relato encontrado."
       />
     </div>
   );
