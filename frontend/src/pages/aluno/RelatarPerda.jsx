@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { criarRelato } from '../../services/meusRelatos.js';
 import Input from '../../components/Input.jsx';
 import Button from '../../components/Button.jsx';
-import { noMax, dataPlausivel, hojeISO, LIM } from '../../utils/validacao.js';
+import { noMax, dataRelatoValida, dataISOhaDias, hojeISO, DIAS_MAX_RELATO, LIM } from '../../utils/validacao.js';
 
 export default function RelatarPerda() {
   const navigate = useNavigate();
@@ -20,7 +20,8 @@ export default function RelatarPerda() {
     else if (!noMax(form.titulo, LIM.titulo)) e.titulo = `Máximo de ${LIM.titulo} caracteres.`;
     if (!noMax(form.descricao, LIM.descricao)) e.descricao = `Máximo de ${LIM.descricao} caracteres.`;
     if (!noMax(form.local_perda, LIM.local)) e.local_perda = `Máximo de ${LIM.local} caracteres.`;
-    if (!dataPlausivel(form.data_perda)) e.data_perda = 'Data inválida (não pode ser futura).';
+    if (!dataRelatoValida(form.data_perda))
+      e.data_perda = `Data inválida. Use uma data dos últimos ${DIAS_MAX_RELATO} dias (e não futura).`;
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -67,7 +68,16 @@ export default function RelatarPerda() {
             <Input label="Descrição" placeholder="Cor, marca, detalhes que ajudem a identificar" value={form.descricao} error={erros.descricao} maxLength={LIM.descricao} onChange={(e) => set('descricao', e.target.value)} />
           </div>
           <Input label="Onde perdeu" placeholder="Ex.: Biblioteca" value={form.local_perda} error={erros.local_perda} maxLength={LIM.local} onChange={(e) => set('local_perda', e.target.value)} />
-          <Input label="Quando" type="date" value={form.data_perda} error={erros.data_perda} max={hojeISO()} onChange={(e) => set('data_perda', e.target.value)} />
+          <Input
+            label="Quando"
+            type="date"
+            value={form.data_perda}
+            error={erros.data_perda}
+            hint={`No máximo ${DIAS_MAX_RELATO} dias atrás.`}
+            min={dataISOhaDias(DIAS_MAX_RELATO)}
+            max={hojeISO()}
+            onChange={(e) => set('data_perda', e.target.value)}
+          />
         </div>
 
         <div className="mt-6 flex gap-2">

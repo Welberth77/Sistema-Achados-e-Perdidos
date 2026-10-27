@@ -5,8 +5,18 @@ import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import Modal from '../../components/Modal.jsx';
 
 const POR_PAGINA = 12;
+
+const STATUS_OPCOES = [
+  { value: '', label: 'Todos os status' },
+  { value: 'RECEBIDO', label: 'Recebido' },
+  { value: 'EM_CUSTODIA', label: 'Em custódia' },
+  { value: 'EM_ANALISE', label: 'Em análise' },
+  { value: 'EM_DEVOLUCAO', label: 'Em devolução' },
+  { value: 'DEVOLVIDO', label: 'Devolvido' },
+];
 
 function dataCurta(iso) {
   if (!iso) return '—';
@@ -31,13 +41,24 @@ function IconeLista() {
   );
 }
 
+function LinhaDetalhe({ rotulo, valor }) {
+  return (
+    <div className="flex gap-2 border-b border-border py-1.5 text-sm last:border-0">
+      <span className="w-32 shrink-0 text-muted">{rotulo}</span>
+      <span className="text-fg">{valor || '—'}</span>
+    </div>
+  );
+}
+
 export default function Inicio() {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [q, setQ] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [status, setStatus] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [detalhe, setDetalhe] = useState(null); // item selecionado para o modal
   const [vista, setVista] = useState(() => {
     try {
       return localStorage.getItem('achados_vista') === 'lista' ? 'lista' : 'cards';
@@ -58,7 +79,7 @@ export default function Inicio() {
     setLoading(true);
     setErro('');
     try {
-      setItens(await listarAchados({ q, categoria }));
+      setItens(await listarAchados({ q, categoria, status }));
       setPagina(1);
     } catch {
       setErro('Não foi possível carregar os itens.');
@@ -109,6 +130,7 @@ export default function Inicio() {
           />
         </div>
         <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
+        <Select label="Status" options={STATUS_OPCOES} value={status} onChange={(e) => setStatus(e.target.value)} />
         <Button variant="outline" onClick={carregar}>Buscar</Button>
       </div>
 
@@ -149,7 +171,13 @@ export default function Inicio() {
                 </span>
                 <StatusBadge status={it.status} />
               </div>
-              <p className="font-medium text-fg">{it.titulo}</p>
+              <button
+                type="button"
+                className="text-left font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
+                onClick={() => setDetalhe(it)}
+              >
+                {it.titulo}
+              </button>
               <dl className="mt-2 space-y-1 text-sm">
                 <div className="flex gap-2">
                   <dt className="w-24 shrink-0 text-muted">Local</dt>
@@ -170,7 +198,13 @@ export default function Inicio() {
               <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
                 {it.categoria?.nome || 'Sem categoria'}
               </span>
-              <span className="font-medium text-fg">{it.titulo}</span>
+              <button
+                type="button"
+                className="font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
+                onClick={() => setDetalhe(it)}
+              >
+                {it.titulo}
+              </button>
               <span className="text-sm text-muted">{it.local_encontrado || '—'}</span>
               <span className="text-sm tabular-nums text-muted">{dataCurta(it.data_encontrado)}</span>
               <span className="ml-auto">
@@ -197,6 +231,33 @@ export default function Inicio() {
           </div>
         </nav>
       )}
+
+      {/* Detalhe do item */}
+      <Modal
+        open={!!detalhe}
+        onClose={() => setDetalhe(null)}
+        title="Detalhes do item"
+        footer={<Button variant="outline" onClick={() => setDetalhe(null)}>Fechar</Button>}
+      >
+        {detalhe && (
+          <div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-fg">{detalhe.titulo}</h3>
+              <StatusBadge status={detalhe.status} />
+            </div>
+            <LinhaDetalhe rotulo="Código" valor={detalhe.codigo} />
+            <LinhaDetalhe rotulo="Categoria" valor={detalhe.categoria?.nome} />
+            <LinhaDetalhe rotulo="Descrição" valor={detalhe.descricao} />
+            <LinhaDetalhe rotulo="Cor" valor={detalhe.cor} />
+            <LinhaDetalhe rotulo="Marca" valor={detalhe.marca} />
+            <LinhaDetalhe rotulo="Local" valor={detalhe.local_encontrado} />
+            <LinhaDetalhe rotulo="Encontrado em" valor={dataCurta(detalhe.data_encontrado)} />
+            <p className="mt-4 text-xs text-muted">
+              Para retirar, procure o setor responsável levando um documento de identificação.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

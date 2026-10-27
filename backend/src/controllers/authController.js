@@ -2,6 +2,20 @@ import pool from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+// Domínios de e-mail aceitos no autocadastro (espelha o front em utils/validacao.js).
+const DOMINIOS_EMAIL = [
+  'gmail.com', 'hotmail.com', 'hotmail.com.br', 'outlook.com', 'outlook.com.br',
+  'yahoo.com', 'yahoo.com.br', 'live.com', 'icloud.com', 'proton.me',
+  'protonmail.com', 'bol.com.br', 'uol.com.br', 'terra.com.br', 'alunos.afya.com.br'
+];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function emailPermitido(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(e)) return false;
+  return DOMINIOS_EMAIL.includes(e.split('@')[1]);
+}
+
 function gerarToken(usuario) {
   return jwt.sign(
     { id: usuario.id, email: usuario.email, papel: usuario.papel },
@@ -52,6 +66,11 @@ export async function registrar(req, res) {
 
   if (!nome || !email || !senha) {
     return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios.' });
+  }
+  if (!emailPermitido(email)) {
+    return res.status(400).json({
+      error: 'Use um e-mail de um provedor válido (ex.: @gmail.com, @hotmail.com, @outlook.com).',
+    });
   }
   if (String(senha).length < 6) {
     return res.status(400).json({ error: 'A senha deve ter ao menos 6 caracteres.' });
