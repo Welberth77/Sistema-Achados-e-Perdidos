@@ -22,6 +22,7 @@ import Relatos from '../pages/relatos/Relatos.jsx';
 import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
 import EditarRelato from '../pages/relatos/EditarRelato.jsx';
 import Categorias from '../pages/categorias/Categorias.jsx';
+import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
@@ -62,6 +63,7 @@ export default function AppRoutes() {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><Usuarios /></ProtectedRoute>} />
+        <Route path="/solicitacoes" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><Solicitacoes /></ProtectedRoute>} />
         <Route path="/categorias" element={<Categorias />} />
 
         <Route path="/registradores" element={<Registradores />} />

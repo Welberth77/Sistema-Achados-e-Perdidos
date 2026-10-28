@@ -49,6 +49,16 @@ export async function alterarPapel(req, res) {
         );
       }
     }
+    // Rebaixado para comum: deixa de ser registrador (se não tiver histórico vinculado).
+    if (papel === 'USUARIO' && rows[0].email) {
+      await pool.query(
+        `DELETE FROM registradores r
+          WHERE r.email = $1 AND r.vinculo = 'SERVIDOR'
+            AND NOT EXISTS (SELECT 1 FROM itens_achados i WHERE i.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM relatos_perda rp WHERE rp.registrador_id = r.id)`,
+        [rows[0].email]
+      );
+    }
     return res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao alterar perfil:', err);

@@ -14,7 +14,9 @@ const base = [
 export default function Sidebar() {
   const { usuario } = useAuth();
   const links =
-    usuario?.papel === 'ADMINISTRADOR' ? [...base, { to: '/usuarios', label: 'Usuários' }] : base;
+    usuario?.papel === 'ADMINISTRADOR'
+      ? [...base, { to: '/solicitacoes', label: 'Solicitações' }, { to: '/usuarios', label: 'Usuários' }]
+      : base;
 
   return (
     <aside className="shrink-0 border-b border-border bg-surface md:w-60 md:border-b-0 md:border-r">
