@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { criarItem } from '../../services/itens.js';
+import { useNavigate, useParams } from 'react-router-dom';
+import { criarItem, atualizarItem, obterItem } from '../../services/itens.js';
 import { listarCategorias } from '../../services/categorias.js';
 import { listarRegistradores } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
@@ -10,6 +10,9 @@ import { noMax, dataPlausivel, hojeISO, LIM } from '../../utils/validacao.js';
 
 export default function NovoItem() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const editando = Boolean(id);
+
   const [form, setForm] = useState({
     titulo: '',
     descricao: '',
@@ -25,11 +28,31 @@ export default function NovoItem() {
   const [erros, setErros] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
+  const [carregando, setCarregando] = useState(editando);
 
   useEffect(() => {
     listarCategorias().then(setCategorias).catch(() => setCategorias([]));
     listarRegistradores().then(setRegistradores).catch(() => setRegistradores([]));
   }, []);
+
+  useEffect(() => {
+    if (!editando) return;
+    obterItem(id)
+      .then((it) =>
+        setForm({
+          titulo: it.titulo || '',
+          descricao: it.descricao || '',
+          categoria_id: it.categoria_id != null ? String(it.categoria_id) : '',
+          cor: it.cor || '',
+          marca: it.marca || '',
+          local_encontrado: it.local_encontrado || '',
+          data_encontrado: (it.data_encontrado || '').toString().slice(0, 10),
+          registrador_id: it.registrador_id != null ? String(it.registrador_id) : '',
+        })
+      )
+      .catch(() => setErroGeral('Não foi possível carregar o item.'))
+      .finally(() => setCarregando(false));
+  }, [id, editando]);
 
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
@@ -55,27 +78,29 @@ export default function NovoItem() {
     if (!validar()) return;
     setEnviando(true);
     try {
-      const categoria = categorias.find((c) => String(c.id) === String(form.categoria_id));
-      const registrador = registradores.find((r) => String(r.id) === String(form.registrador_id));
-      await criarItem({
+      const payload = {
         ...form,
         categoria_id: Number(form.categoria_id),
         registrador_id: Number(form.registrador_id),
-        categoria: categoria ? { id: categoria.id, nome: categoria.nome } : null,
-        registrador: registrador ? { id: registrador.id, nome: registrador.nome } : null,
-      });
+      };
+      if (editando) await atualizarItem(id, payload);
+      else await criarItem(payload);
       navigate('/itens');
     } catch {
-      setErroGeral('Não foi possível cadastrar o item. Tente novamente.');
+      setErroGeral('Não foi possível salvar o item. Tente novamente.');
     } finally {
       setEnviando(false);
     }
   }
 
+  if (carregando) return <p className="text-muted">Carregando…</p>;
+
   return (
     <div className="max-w-2xl">
       <div className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Cadastrar item</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">
+          {editando ? 'Editar item' : 'Cadastrar item'}
+        </h1>
         <p className="mt-1 text-sm text-muted">Registre um item achado no sistema.</p>
       </div>
 
@@ -132,7 +157,7 @@ export default function NovoItem() {
         </div>
 
         <div className="mt-6 flex gap-2">
-          <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
+          <Button onClick={salvar} loading={enviando}>{editando ? 'Salvar' : 'Cadastrar'}</Button>
           <Button variant="ghost" onClick={() => navigate('/itens')}>Cancelar</Button>
         </div>
       </div>

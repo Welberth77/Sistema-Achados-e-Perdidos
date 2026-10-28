@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { criarRegistrador } from '../../services/registradores.js';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { criarRegistrador, atualizarRegistrador, obterRegistrador } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
@@ -18,6 +18,9 @@ const TIPOS_DOC = ['CPF', 'RG', 'OUTRO'];
 
 export default function NovoRegistrador() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const editando = Boolean(id);
+
   const [form, setForm] = useState({
     nome: '',
     vinculo: VINCULOS[0],
@@ -31,6 +34,26 @@ export default function NovoRegistrador() {
   const [erros, setErros] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
+  const [carregando, setCarregando] = useState(editando);
+
+  useEffect(() => {
+    if (!editando) return;
+    obterRegistrador(id)
+      .then((r) =>
+        setForm({
+          nome: r.nome || '',
+          vinculo: r.vinculo || VINCULOS[0],
+          matricula: r.matricula || '',
+          tipo_documento: r.tipo_documento || TIPOS_DOC[0],
+          documento: r.documento || '',
+          telefone: r.telefone || '',
+          email: r.email || '',
+          observacoes: r.observacoes || '',
+        })
+      )
+      .catch(() => setErroGeral('Não foi possível carregar o registrador.'))
+      .finally(() => setCarregando(false));
+  }, [id, editando]);
 
   function set(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -61,23 +84,29 @@ export default function NovoRegistrador() {
     if (!validar()) return;
     setEnviando(true);
     try {
-      await criarRegistrador(form);
+      if (editando) await atualizarRegistrador(id, form);
+      else await criarRegistrador(form);
       navigate('/registradores');
     } catch (err) {
-      if (err.status === 409) {
+      const status = err.response?.status ?? err.status;
+      if (status === 409) {
         setErros((prev) => ({ ...prev, documento: 'Já existe um registrador com esse documento.' }));
       } else {
-        setErroGeral('Não foi possível cadastrar. Tente novamente.');
+        setErroGeral('Não foi possível salvar. Tente novamente.');
       }
     } finally {
       setEnviando(false);
     }
   }
 
+  if (carregando) return <p className="text-muted">Carregando…</p>;
+
   return (
     <div className="max-w-2xl">
       <div className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Novo registrador</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">
+          {editando ? 'Editar registrador' : 'Novo registrador'}
+        </h1>
         <p className="mt-1 text-sm text-muted">Cadastre uma pessoa autorizada a registrar itens e relatos.</p>
       </div>
 
@@ -134,7 +163,7 @@ export default function NovoRegistrador() {
         </div>
 
         <div className="mt-6 flex gap-2">
-          <Button onClick={salvar} loading={enviando}>Cadastrar</Button>
+          <Button onClick={salvar} loading={enviando}>{editando ? 'Salvar' : 'Cadastrar'}</Button>
           <Button variant="ghost" onClick={() => navigate('/registradores')}>Cancelar</Button>
         </div>
       </div>

@@ -124,3 +124,40 @@ export async function criarRelato(req, res) {
     return res.status(500).json({ error: 'Erro ao registrar o relato.' });
   }
 }
+
+// PUT /api/relatos/:id  (staff)
+export async function atualizarRelato(req, res) {
+  const { id } = req.params;
+  const { titulo, descricao, categoria_id, cor, marca, local_perda, data_perda, registrador_id, status } = req.body;
+  if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: 'Informe o título do relato.' });
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE relatos_perda SET
+         titulo=$1, descricao=$2, categoria_id=$3, cor=$4, marca=$5,
+         local_perda=$6, data_perda=$7, registrador_id=$8,
+         status=COALESCE($9, status), atualizado_em=now()
+       WHERE id=$10`,
+      [String(titulo).trim(), descricao || null, categoria_id || null, cor || null, marca || null,
+       local_perda || null, data_perda || null, registrador_id || null, status || null, id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Relato não encontrado.' });
+    const { rows } = await pool.query(`${SELECT_RELATO} WHERE r.id = $1`, [id]);
+    return res.json(mapRelato(rows[0]));
+  } catch (err) {
+    console.error('Erro ao atualizar relato:', err);
+    return res.status(500).json({ error: 'Erro ao atualizar o relato.' });
+  }
+}
+
+// DELETE /api/relatos/:id  (staff)
+export async function excluirRelato(req, res) {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM relatos_perda WHERE id = $1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Relato não encontrado.' });
+    return res.status(204).end();
+  } catch (err) {
+    if (err.code === '23503') return res.status(409).json({ error: 'Não é possível excluir: há vínculo com este relato.' });
+    console.error('Erro ao excluir relato:', err);
+    return res.status(500).json({ error: 'Erro ao excluir o relato.' });
+  }
+}

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 const base = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/registradores', label: 'Registradores' },
+  { to: '/categorias', label: 'Categorias' },
   { to: '/itens', label: 'Itens' },
   { to: '/relatos', label: 'Relatos' },
   { to: '/consulta', label: 'Consulta' },

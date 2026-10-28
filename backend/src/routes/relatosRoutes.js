@@ -1,6 +1,7 @@
 import express from 'express';
 import {
-  listarRelatos, meusRelatos, obterRelato, listarCorrespondencias, criarRelato,
+  listarRelatos, meusRelatos, obterRelato, listarCorrespondencias,
+  criarRelato, atualizarRelato, excluirRelato,
 } from '../controllers/relatosController.js';
 import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
 
@@ -13,5 +14,7 @@ router.post('/', autenticarToken, criarRelato);             // qualquer autentic
 router.get('/', autenticarToken, staff, listarRelatos);     // staff: todos os relatos
 router.get('/:id', autenticarToken, staff, obterRelato);
 router.get('/:id/correspondencias', autenticarToken, staff, listarCorrespondencias);
+router.put('/:id', autenticarToken, staff, atualizarRelato);
+router.delete('/:id', autenticarToken, staff, excluirRelato);
 
 export default router;

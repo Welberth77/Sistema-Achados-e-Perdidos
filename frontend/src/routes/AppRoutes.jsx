@@ -20,6 +20,8 @@ import DetalhesItem from '../pages/itens/DetalhesItem.jsx';
 import DevolverItem from '../pages/itens/DevolverItem.jsx';
 import Relatos from '../pages/relatos/Relatos.jsx';
 import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
+import EditarRelato from '../pages/relatos/EditarRelato.jsx';
+import Categorias from '../pages/categorias/Categorias.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
@@ -60,17 +62,21 @@ export default function AppRoutes() {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/categorias" element={<Categorias />} />
 
         <Route path="/registradores" element={<Registradores />} />
         <Route path="/registradores/novo" element={<NovoRegistrador />} />
+        <Route path="/registradores/:id/editar" element={<NovoRegistrador />} />
 
         <Route path="/itens" element={<Itens />} />
         <Route path="/itens/novo" element={<NovoItem />} />
+        <Route path="/itens/:id/editar" element={<NovoItem />} />
         <Route path="/itens/:id" element={<DetalhesItem />} />
         <Route path="/itens/:id/devolver" element={<DevolverItem />} />
 
         <Route path="/relatos" element={<Relatos />} />
         <Route path="/relatos/:id" element={<DetalhesRelato />} />
+        <Route path="/relatos/:id/editar" element={<EditarRelato />} />
 
         <Route path="/consulta" element={<Consulta />} />
 

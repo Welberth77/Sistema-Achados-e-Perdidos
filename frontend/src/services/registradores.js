@@ -76,3 +76,17 @@ export async function criarRegistrador(payload) {
   const { data } = await api.post('/registradores', payload);
   return data;
 }
+
+export async function obterRegistrador(id) {
+  const { data } = await api.get(`/registradores/${id}`);
+  return data;
+}
+
+export async function atualizarRegistrador(id, payload) {
+  const { data } = await api.put(`/registradores/${id}`, payload);
+  return data;
+}
+
+export async function excluirRegistrador(id) {
+  await api.delete(`/registradores/${id}`);
+}

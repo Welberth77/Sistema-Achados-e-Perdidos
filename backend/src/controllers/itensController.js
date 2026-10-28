@@ -131,3 +131,45 @@ export async function criarItem(req, res) {
     return res.status(500).json({ error: 'Erro ao cadastrar o item.' });
   }
 }
+
+// PUT /api/itens/:id  (staff)
+export async function atualizarItem(req, res) {
+  const { id } = req.params;
+  const {
+    titulo, descricao, categoria_id, cor, marca,
+    local_encontrado, data_encontrado, registrador_id, status, foto_url, observacoes,
+  } = req.body;
+  if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: 'Informe o título do item.' });
+  if (!data_encontrado) return res.status(400).json({ error: 'Informe a data em que foi encontrado.' });
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE itens_achados SET
+         titulo=$1, descricao=$2, categoria_id=$3, cor=$4, marca=$5,
+         local_encontrado=$6, data_encontrado=$7, registrador_id=$8,
+         foto_url=$9, observacoes=$10, status=COALESCE($11, status), atualizado_em=now()
+       WHERE id=$12`,
+      [String(titulo).trim(), descricao || null, categoria_id || null, cor || null, marca || null,
+       local_encontrado || null, data_encontrado, registrador_id || null, foto_url || null,
+       observacoes || null, status || null, id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Item não encontrado.' });
+    const { rows } = await pool.query(`${SELECT_ITEM} WHERE i.id = $1`, [id]);
+    return res.json(mapItem(rows[0]));
+  } catch (err) {
+    console.error('Erro ao atualizar item:', err);
+    return res.status(500).json({ error: 'Erro ao atualizar o item.' });
+  }
+}
+
+// DELETE /api/itens/:id  (staff)
+export async function excluirItem(req, res) {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM itens_achados WHERE id = $1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Item não encontrado.' });
+    return res.status(204).end();
+  } catch (err) {
+    if (err.code === '23503') return res.status(409).json({ error: 'Não é possível excluir: há caso ou devolução vinculado a este item.' });
+    console.error('Erro ao excluir item:', err);
+    return res.status(500).json({ error: 'Erro ao excluir o item.' });
+  }
+}

@@ -119,3 +119,12 @@ export async function criarRelato(payload) {
   const { data } = await api.post('/relatos', payload);
   return data;
 }
+
+export async function atualizarRelato(id, payload) {
+  const { data } = await api.put(`/relatos/${id}`, payload);
+  return data;
+}
+
+export async function excluirRelato(id) {
+  await api.delete(`/relatos/${id}`);
+}
