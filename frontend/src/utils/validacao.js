@@ -71,20 +71,57 @@ export function soDigitos(s) {
   return String(s || '').replace(/\D/g, '');
 }
 
-// Telefone opcional: vazio é válido; se preenchido, precisa ter formato plausível.
+// Telefone opcional: vazio é válido; se preenchido, precisa ter DDD + número (10 ou 11 dígitos).
 export function telefoneValido(tel) {
   const t = String(tel || '').trim();
-  return t === '' || TEL_RE.test(t);
+  if (t === '') return true;
+  const n = soDigitos(t).length;
+  return n === 10 || n === 11;
 }
 
-// Documento conforme o tipo (vazio é válido).
+// Documento conforme o tipo (vazio é válido). CPF valida os dígitos verificadores.
 export function documentoValido(tipo, doc) {
   const bruto = String(doc || '').trim();
   if (bruto === '') return true;
+  if (tipo === 'CPF') return cpfValido(doc);
   const n = soDigitos(doc).length;
-  if (tipo === 'CPF') return n === 11;
   if (tipo === 'RG') return n >= 5 && n <= 14;
   return bruto.length <= LIM.documento;
+}
+
+// Valida CPF pelos dígitos verificadores (ignora pontuação).
+export function cpfValido(cpf) {
+  const n = soDigitos(cpf);
+  if (n.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(n)) return false; // rejeita sequências repetidas (000..., 111...)
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += Number(n[i]) * (10 - i);
+  let d1 = (soma * 10) % 11;
+  if (d1 === 10) d1 = 0;
+  if (d1 !== Number(n[9])) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += Number(n[i]) * (11 - i);
+  let d2 = (soma * 10) % 11;
+  if (d2 === 10) d2 = 0;
+  return d2 === Number(n[10]);
+}
+
+// Máscara de CPF enquanto digita: 000.000.000-00.
+export function formatarCpf(v) {
+  const n = soDigitos(v).slice(0, 11);
+  if (n.length > 9) return `${n.slice(0, 3)}.${n.slice(3, 6)}.${n.slice(6, 9)}-${n.slice(9)}`;
+  if (n.length > 6) return `${n.slice(0, 3)}.${n.slice(3, 6)}.${n.slice(6)}`;
+  if (n.length > 3) return `${n.slice(0, 3)}.${n.slice(3)}`;
+  return n;
+}
+
+// Máscara de telefone enquanto digita: (00) 00000-0000 ou (00) 0000-0000.
+export function formatarTelefone(v) {
+  const n = soDigitos(v).slice(0, 11);
+  if (n.length <= 2) return n;
+  if (n.length <= 6) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  if (n.length <= 10) return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
 }
 
 // true se o texto está dentro do limite de caracteres.

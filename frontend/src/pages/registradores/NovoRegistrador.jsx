@@ -4,7 +4,7 @@ import { criarRegistrador } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
-import { emailValido, telefoneValido, documentoValido, noMax, LIM } from '../../utils/validacao.js';
+import { emailValido, telefoneValido, documentoValido, noMax, LIM, formatarCpf, formatarTelefone } from '../../utils/validacao.js';
 
 const VINCULOS = ['ALUNO', 'DOCENTE', 'TERCEIRIZADO', 'SERVIDOR', 'OUTRO'];
 const VINCULO_LABEL = {
@@ -43,11 +43,11 @@ export default function NovoRegistrador() {
     if (!form.vinculo) e.vinculo = 'Selecione o vínculo.';
     if (!noMax(form.matricula, LIM.matricula)) e.matricula = `Máximo de ${LIM.matricula} caracteres.`;
     if (!documentoValido(form.tipo_documento, form.documento)) {
-      e.documento = form.tipo_documento === 'CPF' ? 'CPF deve ter 11 dígitos.' : 'Documento inválido.';
+      e.documento = form.tipo_documento === 'CPF' ? 'CPF inválido.' : 'Documento inválido.';
     } else if (!noMax(form.documento, LIM.documento)) {
       e.documento = `Máximo de ${LIM.documento} caracteres.`;
     }
-    if (!telefoneValido(form.telefone)) e.telefone = 'Telefone inválido.';
+    if (!telefoneValido(form.telefone)) e.telefone = 'Telefone inválido (inclua o DDD).';
     else if (!noMax(form.telefone, LIM.telefone)) e.telefone = `Máximo de ${LIM.telefone} caracteres.`;
     if (form.email.trim() && !emailValido(form.email)) e.email = 'E-mail inválido.';
     else if (!noMax(form.email, LIM.email)) e.email = `Máximo de ${LIM.email} caracteres.`;
@@ -115,13 +115,18 @@ export default function NovoRegistrador() {
               className="w-full"
               options={TIPOS_DOC.map((t) => ({ value: t, label: t }))}
               value={form.tipo_documento}
-              onChange={(e) => set('tipo_documento', e.target.value)}
+              onChange={(e) =>
+                setForm((f) => {
+                  const tipo = e.target.value;
+                  return { ...f, tipo_documento: tipo, documento: tipo === 'CPF' ? formatarCpf(f.documento) : f.documento };
+                })
+              }
             />
-            <Input label="Documento" value={form.documento} error={erros.documento} maxLength={LIM.documento} onChange={(e) => set('documento', e.target.value)} />
+            <Input label="Documento" value={form.documento} error={erros.documento} maxLength={LIM.documento} inputMode={form.tipo_documento === 'CPF' ? 'numeric' : 'text'} placeholder={form.tipo_documento === 'CPF' ? '000.000.000-00' : ''} onChange={(e) => set('documento', form.tipo_documento === 'CPF' ? formatarCpf(e.target.value) : e.target.value)} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Telefone" value={form.telefone} error={erros.telefone} maxLength={LIM.telefone} onChange={(e) => set('telefone', e.target.value)} />
+            <Input label="Telefone" value={form.telefone} error={erros.telefone} maxLength={LIM.telefone} inputMode="tel" placeholder="(85) 99999-0000" onChange={(e) => set('telefone', formatarTelefone(e.target.value))} />
             <Input label="E-mail" type="email" value={form.email} error={erros.email} maxLength={LIM.email} onChange={(e) => set('email', e.target.value)} />
           </div>
 
