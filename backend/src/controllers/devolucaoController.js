@@ -54,6 +54,13 @@ export async function registrarDevolucao(req, res) {
       [item_id, recebedor_id, descricao, usuario_id]
     );
 
+    // 3. Encerra casos abertos vinculados a este item (sincroniza o fluxo).
+    await client.query(
+      `UPDATE casos SET status = 'ENCERRADO', data_encerramento = NOW()
+        WHERE item_achado_id = $1 AND status NOT IN ('ENCERRADO','CANCELADO')`,
+      [item_id]
+    );
+
     await client.query('COMMIT');
 
     return res.status(200).json({

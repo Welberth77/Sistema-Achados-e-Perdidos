@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { obterCaso } from '../../services/casos.js';
+import { obterCaso, encerrarCaso } from '../../services/casos.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 function Linha({ rotulo, valor, onClick }) {
   return (
@@ -34,14 +35,37 @@ export default function DetalhesCaso() {
   const [caso, setCaso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
+  const [confirmando, setConfirmando] = useState(false);
+  const [encerrando, setEncerrando] = useState(false);
+  const [erroAcao, setErroAcao] = useState('');
 
-  useEffect(() => {
+  function carregar() {
     setLoading(true);
     obterCaso(id)
       .then(setCaso)
       .catch(() => setErro('Caso não encontrado.'))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function confirmarEncerramento() {
+    setErroAcao('');
+    setEncerrando(true);
+    try {
+      await encerrarCaso(id);
+      setConfirmando(false);
+      carregar();
+    } catch (e) {
+      setErroAcao(e.response?.data?.error || 'Não foi possível encerrar o caso.');
+      setConfirmando(false);
+    } finally {
+      setEncerrando(false);
+    }
+  }
 
   if (loading) return <p className="text-muted">Carregando…</p>;
   if (erro)
@@ -52,12 +76,20 @@ export default function DetalhesCaso() {
       </div>
     );
 
+  const encerravel = caso.status !== 'ENCERRADO' && caso.status !== 'CANCELADO';
+
   return (
     <div className="max-w-3xl">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight tabular-nums text-fg">{caso.codigo}</h1>
         <StatusBadge status={caso.status} />
       </div>
+
+      {erroAcao && (
+        <div role="alert" className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
+          {erroAcao}
+        </div>
+      )}
 
       <section className="mb-5 rounded-lg border border-border bg-surface p-5">
         <h2 className="mb-3 text-sm font-semibold text-fg">Dados do caso</h2>
@@ -81,7 +113,20 @@ export default function DetalhesCaso() {
         />
       </section>
 
-      <Button variant="outline" onClick={() => navigate('/casos')}>Voltar</Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => navigate('/casos')}>Voltar</Button>
+        {encerravel && <Button onClick={() => setConfirmando(true)}>Encerrar caso</Button>}
+      </div>
+
+      <ConfirmDialog
+        open={confirmando}
+        onClose={() => setConfirmando(false)}
+        onConfirm={confirmarEncerramento}
+        loading={encerrando}
+        title="Encerrar caso"
+        confirmLabel="Encerrar"
+        mensagem={`Encerrar o caso ${caso.codigo}? Ele será marcado como concluído.`}
+      />
     </div>
   );
 }

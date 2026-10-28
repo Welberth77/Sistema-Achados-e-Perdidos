@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { obterItem } from '../../services/itens.js';
 import { registrarCustodia } from '../../services/custodia.js';
+import { criarCaso } from '../../services/casos.js';
+import { listarRelatos } from '../../services/relatos.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Button from '../../components/Button.jsx';
 import Modal from '../../components/Modal.jsx';
@@ -39,6 +41,13 @@ export default function DetalhesItem() {
   const [custErros, setCustErros] = useState({});
   const [custEnviando, setCustEnviando] = useState(false);
   const [custErroGeral, setCustErroGeral] = useState('');
+
+  // Modal de abrir caso
+  const [modalCaso, setModalCaso] = useState(false);
+  const [relatos, setRelatos] = useState([]);
+  const [casoForm, setCasoForm] = useState({ relato_perda_id: '', descricao: '' });
+  const [abrindoCaso, setAbrindoCaso] = useState(false);
+  const [erroCaso, setErroCaso] = useState('');
 
   function carregar() {
     setLoading(true);
@@ -80,11 +89,37 @@ export default function DetalhesItem() {
         observacoes: custForm.observacoes.trim(),
       });
       setModalAberto(false);
-      carregar(); // atualiza "custódia atual" e o histórico
+      carregar();
     } catch (err) {
       setCustErroGeral(err.response?.data?.error || 'Não foi possível registrar a custódia.');
     } finally {
       setCustEnviando(false);
+    }
+  }
+
+  function abrirModalCaso() {
+    setCasoForm({ relato_perda_id: '', descricao: '' });
+    setErroCaso('');
+    setModalCaso(true);
+    listarRelatos({})
+      .then((lista) => setRelatos(Array.isArray(lista) ? lista : []))
+      .catch(() => setRelatos([]));
+  }
+
+  async function abrirCaso() {
+    setErroCaso('');
+    setAbrindoCaso(true);
+    try {
+      const novo = await criarCaso({
+        item_achado_id: id,
+        relato_perda_id: casoForm.relato_perda_id || null,
+        descricao: casoForm.descricao.trim() || undefined,
+      });
+      navigate(`/casos/${novo.id}`);
+    } catch (err) {
+      setErroCaso(err.response?.data?.error || 'Não foi possível abrir o caso.');
+    } finally {
+      setAbrindoCaso(false);
     }
   }
 
@@ -161,10 +196,14 @@ export default function DetalhesItem() {
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => navigate('/itens')}>Voltar</Button>
         {ativo && (
-          <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
+          <>
+            <Button variant="outline" onClick={abrirModalCaso}>Abrir caso</Button>
+            <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
+          </>
         )}
       </div>
 
+      {/* Modal: registrar custódia */}
       <Modal
         open={modalAberto}
         onClose={() => setModalAberto(false)}
@@ -210,6 +249,53 @@ export default function DetalhesItem() {
             error={custErros.observacoes}
             maxLength={LIM.observacoes}
             onChange={(e) => setCust('observacoes', e.target.value)}
+          />
+        </div>
+      </Modal>
+
+      {/* Modal: abrir caso */}
+      <Modal
+        open={modalCaso}
+        onClose={() => setModalCaso(false)}
+        title="Abrir caso"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setModalCaso(false)}>Cancelar</Button>
+            <Button onClick={abrirCaso} loading={abrindoCaso}>Abrir caso</Button>
+          </>
+        }
+      >
+        {erroCaso && (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300"
+          >
+            {erroCaso}
+          </div>
+        )}
+        <p className="mb-4 text-sm text-muted">
+          Abrindo um caso para <span className="font-medium text-fg">{item.codigo} — {item.titulo}</span>.
+          Você pode ligar a um relato de perda correspondente (opcional).
+        </p>
+        <div className="grid grid-cols-1 gap-4">
+          <Select
+            label="Relato de perda (opcional)"
+            className="w-full"
+            value={casoForm.relato_perda_id}
+            onChange={(e) => setCasoForm((f) => ({ ...f, relato_perda_id: e.target.value }))}
+          >
+            <option value="">Sem relato vinculado</option>
+            {relatos.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.codigo} — {r.titulo}
+              </option>
+            ))}
+          </Select>
+          <Input
+            label="Descrição (opcional)"
+            value={casoForm.descricao}
+            maxLength={LIM.descricao}
+            onChange={(e) => setCasoForm((f) => ({ ...f, descricao: e.target.value }))}
           />
         </div>
       </Modal>
