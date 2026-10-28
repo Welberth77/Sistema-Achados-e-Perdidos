@@ -15,3 +15,8 @@ export async function alterarPapel(id, papel) {
 export async function excluirUsuario(id) {
   await api.delete(`/usuarios/${id}`);
 }
+
+export async function listarAlunos() {
+  const { data } = await api.get('/usuarios/alunos');
+  return data.data ?? data;
+}

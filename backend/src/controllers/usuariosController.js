@@ -75,3 +75,16 @@ export async function excluirUsuario(req, res) {
     return res.status(500).json({ error: 'Erro ao excluir o usuário.' });
   }
 }
+
+// GET /api/usuarios/alunos — usuários comuns (para escolher o dono na devolução). Staff.
+export async function listarAlunos(req, res) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, nome, email FROM usuarios WHERE papel = 'USUARIO' AND ativo = TRUE ORDER BY nome`
+    );
+    return res.json(rows);
+  } catch (err) {
+    console.error('Erro ao listar alunos:', err);
+    return res.status(500).json({ error: 'Erro ao listar usuários.' });
+  }
+}

@@ -152,7 +152,7 @@ export default function DetalhesItem() {
         <Linha rotulo="Marca" valor={item.marca} />
         <Linha rotulo="Local encontrado" valor={item.local_encontrado} />
         <Linha rotulo="Data encontrado" valor={item.data_encontrado} />
-        <Linha rotulo="Registrador" valor={item.registrador?.nome} />
+        <Linha rotulo="Registrado por (servidor)" valor={item.registrador?.nome} />
       </section>
 
       <section className="mb-5 rounded-lg border border-border bg-surface p-5">
