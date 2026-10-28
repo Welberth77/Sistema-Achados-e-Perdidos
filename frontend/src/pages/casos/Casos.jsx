@@ -9,9 +9,6 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 const STATUS = [
   { value: '', label: 'Todos os status' },
   { value: 'ABERTO', label: 'Aberto' },
-  { value: 'AGUARDANDO_COMPROVACAO', label: 'Aguardando comprovação' },
-  { value: 'AUTORIZADO', label: 'Autorizado' },
-  { value: 'DEVOLVIDO', label: 'Devolvido' },
   { value: 'ENCERRADO', label: 'Encerrado' },
   { value: 'CANCELADO', label: 'Cancelado' },
 ];

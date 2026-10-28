@@ -61,7 +61,7 @@ export default function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/usuarios" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><Usuarios /></ProtectedRoute>} />
         <Route path="/categorias" element={<Categorias />} />
 
         <Route path="/registradores" element={<Registradores />} />

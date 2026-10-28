@@ -19,6 +19,7 @@ const CONFIG = {
   DESCARTADO: { label: 'Descartado', tone: 'slate' },
   ABERTO: { label: 'Aberto', tone: 'blue' },
   CORRESPONDENCIA: { label: 'Correspondência', tone: 'violet' },
+  SUGERIDA: { label: 'Sugerida', tone: 'violet' },
   ENCERRADO: { label: 'Encerrado', tone: 'slate' },
   CANCELADO: { label: 'Cancelado', tone: 'rose' },
   AGUARDANDO_COMPROVACAO: { label: 'Aguardando comprovação', tone: 'amber' },

@@ -76,22 +76,51 @@ export async function obterRelato(req, res) {
 
 // GET /api/relatos/:id/correspondencias — itens achados sugeridos para o relato (staff).
 export async function listarCorrespondencias(req, res) {
+  const { id } = req.params;
   try {
-    const { rows } = await pool.query(
+    const rel = await pool.query('SELECT categoria_id, titulo FROM relatos_perda WHERE id = $1', [id]);
+    if (!rel.rows.length) return res.status(404).json({ error: 'Relato não encontrado.' });
+    const { categoria_id, titulo } = rel.rows[0];
+
+    // 1) Correspondências já registradas na tabela.
+    const stored = await pool.query(
       `SELECT co.id, co.item_achado_id, co.pontuacao, co.status,
               i.codigo AS item_codigo, i.titulo AS item_titulo
        FROM correspondencias co
        JOIN itens_achados i ON i.id = co.item_achado_id
        WHERE co.relato_perda_id = $1
        ORDER BY co.pontuacao DESC NULLS LAST, co.id DESC`,
-      [req.params.id]
+      [id]
     );
-    return res.json(rows.map((c) => ({
-      id: c.id,
-      item_achado_id: c.item_achado_id,
-      item: { id: c.item_achado_id, codigo: c.item_codigo, titulo: c.item_titulo },
-      pontuacao: c.pontuacao != null ? Number(c.pontuacao) : null,
-      status: c.status,
+    if (stored.rows.length) {
+      return res.json(stored.rows.map((c) => ({
+        id: c.id,
+        item_achado_id: c.item_achado_id,
+        item: { id: c.item_achado_id, codigo: c.item_codigo, titulo: c.item_titulo },
+        pontuacao: c.pontuacao != null ? Number(c.pontuacao) : null,
+        status: c.status,
+      })));
+    }
+
+    // 2) Sugestões automáticas: itens ativos na mesma categoria ou com título parecido.
+    const sug = await pool.query(
+      `SELECT i.id, i.codigo, i.titulo,
+              ((CASE WHEN $1::bigint IS NOT NULL AND i.categoria_id = $1::bigint THEN 60 ELSE 0 END)
+             + (CASE WHEN $2 <> '' AND i.titulo ILIKE '%' || $2 || '%' THEN 40 ELSE 0 END)) AS score
+       FROM itens_achados i
+       WHERE i.status NOT IN ('DEVOLVIDO','DESCARTADO')
+         AND (($1::bigint IS NOT NULL AND i.categoria_id = $1::bigint)
+           OR ($2 <> '' AND i.titulo ILIKE '%' || $2 || '%'))
+       ORDER BY score DESC, i.data_encontrado DESC
+       LIMIT 10`,
+      [categoria_id, titulo || '']
+    );
+    return res.json(sug.rows.map((i) => ({
+      id: `sug-${i.id}`,
+      item_achado_id: i.id,
+      item: { id: i.id, codigo: i.codigo, titulo: i.titulo },
+      pontuacao: Number(i.score),
+      status: 'SUGERIDA',
     })));
   } catch (err) {
     console.error('Erro ao listar correspondências:', err);
