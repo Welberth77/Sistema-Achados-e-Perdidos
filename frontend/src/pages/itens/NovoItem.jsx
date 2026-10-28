@@ -2,11 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { criarItem, atualizarItem, obterItem } from '../../services/itens.js';
 import { listarCategorias } from '../../services/categorias.js';
-import { listarRegistradores } from '../../services/registradores.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import { noMax, dataPlausivel, hojeISO, LIM } from '../../utils/validacao.js';
+
+const STATUS = [
+  { value: 'RECEBIDO', label: 'Recebido' },
+  { value: 'EM_CUSTODIA', label: 'Em custódia' },
+  { value: 'EM_ANALISE', label: 'Em análise' },
+  { value: 'EM_DEVOLUCAO', label: 'Em devolução' },
+  { value: 'DEVOLVIDO', label: 'Devolvido' },
+  { value: 'DESCARTADO', label: 'Descartado' },
+];
 
 export default function NovoItem() {
   const navigate = useNavigate();
@@ -21,10 +29,9 @@ export default function NovoItem() {
     marca: '',
     local_encontrado: '',
     data_encontrado: '',
-    registrador_id: '',
+    status: 'RECEBIDO',
   });
   const [categorias, setCategorias] = useState([]);
-  const [registradores, setRegistradores] = useState([]);
   const [erros, setErros] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
@@ -32,7 +39,6 @@ export default function NovoItem() {
 
   useEffect(() => {
     listarCategorias().then(setCategorias).catch(() => setCategorias([]));
-    listarRegistradores().then(setRegistradores).catch(() => setRegistradores([]));
   }, []);
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export default function NovoItem() {
           marca: it.marca || '',
           local_encontrado: it.local_encontrado || '',
           data_encontrado: (it.data_encontrado || '').toString().slice(0, 10),
-          registrador_id: it.registrador_id != null ? String(it.registrador_id) : '',
+          status: it.status || 'RECEBIDO',
         })
       )
       .catch(() => setErroGeral('Não foi possível carregar o item.'))
@@ -68,7 +74,6 @@ export default function NovoItem() {
     else if (!noMax(form.local_encontrado, LIM.local)) e.local_encontrado = `Máximo de ${LIM.local} caracteres.`;
     if (!form.data_encontrado) e.data_encontrado = 'Informe a data.';
     else if (!dataPlausivel(form.data_encontrado)) e.data_encontrado = 'Data inválida (não pode ser futura).';
-    if (!form.registrador_id) e.registrador_id = 'Selecione o registrador.';
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -78,11 +83,7 @@ export default function NovoItem() {
     if (!validar()) return;
     setEnviando(true);
     try {
-      const payload = {
-        ...form,
-        categoria_id: Number(form.categoria_id),
-        registrador_id: Number(form.registrador_id),
-      };
+      const payload = { ...form, categoria_id: Number(form.categoria_id) };
       if (editando) await atualizarItem(id, payload);
       else await criarItem(payload);
       navigate('/itens');
@@ -101,7 +102,9 @@ export default function NovoItem() {
         <h1 className="text-2xl font-semibold tracking-tight text-fg">
           {editando ? 'Editar item' : 'Cadastrar item'}
         </h1>
-        <p className="mt-1 text-sm text-muted">Registre um item achado no sistema.</p>
+        <p className="mt-1 text-sm text-muted">
+          Registre um item achado. O registrador é você (servidor logado).
+        </p>
       </div>
 
       {erroGeral && (
@@ -137,18 +140,12 @@ export default function NovoItem() {
           </Select>
 
           <Select
-            label="Registrador"
-            required
+            label="Status"
             className="w-full"
-            error={erros.registrador_id}
-            value={form.registrador_id}
-            onChange={(e) => set('registrador_id', e.target.value)}
-          >
-            <option value="">Selecione…</option>
-            {registradores.map((r) => (
-              <option key={r.id} value={r.id}>{r.nome}</option>
-            ))}
-          </Select>
+            options={STATUS}
+            value={form.status}
+            onChange={(e) => set('status', e.target.value)}
+          />
 
           <Input label="Cor" value={form.cor} error={erros.cor} maxLength={LIM.cor} onChange={(e) => set('cor', e.target.value)} />
           <Input label="Marca" value={form.marca} error={erros.marca} maxLength={LIM.marca} onChange={(e) => set('marca', e.target.value)} />

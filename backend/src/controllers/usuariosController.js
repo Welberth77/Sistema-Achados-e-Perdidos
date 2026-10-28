@@ -39,6 +39,16 @@ export async function alterarPapel(req, res) {
     if (!rows.length) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
+    // Servidores/admins viram também registradores (pessoal do balcão), p/ evitar confusão.
+    if (['SERVIDOR', 'ADMINISTRADOR'].includes(papel) && rows[0].email) {
+      const ex = await pool.query('SELECT id FROM registradores WHERE email = $1 LIMIT 1', [rows[0].email]);
+      if (!ex.rows.length) {
+        await pool.query(
+          `INSERT INTO registradores (nome, vinculo, email) VALUES ($1, 'SERVIDOR', $2)`,
+          [rows[0].nome, rows[0].email]
+        );
+      }
+    }
     return res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao alterar perfil:', err);

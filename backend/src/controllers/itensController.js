@@ -1,5 +1,7 @@
 import pool from '../config/db.js';
 
+const STATUS_ITEM = ['RECEBIDO', 'EM_CUSTODIA', 'EM_ANALISE', 'EM_DEVOLUCAO', 'DEVOLVIDO', 'DESCARTADO'];
+
 const SELECT_ITEM = `
   SELECT i.id, i.codigo, i.titulo, i.descricao, i.categoria_id, i.cor, i.marca,
          i.local_encontrado, i.data_encontrado, i.registrador_id, i.status,
@@ -31,12 +33,28 @@ function mapItem(row) {
   };
 }
 
+// Resolve (ou cria) o registrador que corresponde ao servidor logado.
+// Assim "quem registrou" é sempre o servidor do balcão, sem escolher na lista.
+async function registradorDoUsuario(usuarioId) {
+  const u = await pool.query('SELECT nome, email FROM usuarios WHERE id = $1', [usuarioId]);
+  if (!u.rows.length) return null;
+  const { nome, email } = u.rows[0];
+  if (email) {
+    const existe = await pool.query('SELECT id FROM registradores WHERE email = $1 ORDER BY id LIMIT 1', [email]);
+    if (existe.rows.length) return existe.rows[0].id;
+  }
+  const ins = await pool.query(
+    `INSERT INTO registradores (nome, vinculo, email) VALUES ($1, 'SERVIDOR', $2) RETURNING id`,
+    [nome, email]
+  );
+  return ins.rows[0].id;
+}
+
 // GET /api/itens?q=&categoria=&categoria_id=&status=&data_inicio=&data_fim=
-// Qualquer usuário autenticado (inclusive aluno) pode consultar os itens achados.
 export async function listarItens(req, res) {
   const q = req.query.q || '';
-  const categoria = req.query.categoria || '';          // por nome (busca do aluno)
-  const categoria_id = String(req.query.categoria_id || ''); // por id (filtro do admin)
+  const categoria = req.query.categoria || '';
+  const categoria_id = String(req.query.categoria_id || '');
   const status = req.query.status || '';
   const data_inicio = req.query.data_inicio || '';
   const data_fim = req.query.data_fim || '';
@@ -63,7 +81,6 @@ export async function obterItem(req, res) {
     const { rows } = await pool.query(`${SELECT_ITEM} WHERE i.id = $1`, [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Item não encontrado.' });
     const item = mapItem(rows[0]);
-
     const { rows: cust } = await pool.query(
       `SELECT cu.id, cu.tipo, cu.local_guarda, cu.data_evento, u.nome AS usuario_nome
        FROM custodias cu
@@ -86,18 +103,21 @@ export async function obterItem(req, res) {
   }
 }
 
-// POST /api/itens  — cadastra um item achado (staff). Gera o código ACH-ANO-NNNN.
+// POST /api/itens  — cadastra um item achado (staff). Registrador = servidor logado.
 export async function criarItem(req, res) {
   const {
     titulo, descricao, categoria_id, cor, marca,
-    local_encontrado, data_encontrado, registrador_id, foto_url, observacoes,
+    local_encontrado, data_encontrado, status, foto_url, observacoes,
   } = req.body;
 
   if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: 'Informe o título do item.' });
   if (!data_encontrado) return res.status(400).json({ error: 'Informe a data em que foi encontrado.' });
 
+  const statusFinal = STATUS_ITEM.includes(status) ? status : 'RECEBIDO';
   const ano = new Date().getFullYear();
   try {
+    const registrador_id = await registradorDoUsuario(req.usuario.id);
+
     for (let tentativa = 0; tentativa < 5; tentativa++) {
       const { rows: cnt } = await pool.query(
         `SELECT COUNT(*)::int AS n FROM itens_achados WHERE codigo LIKE $1`,
@@ -110,18 +130,18 @@ export async function criarItem(req, res) {
           `INSERT INTO itens_achados
              (codigo, titulo, descricao, categoria_id, cor, marca, local_encontrado,
               data_encontrado, registrador_id, status, foto_url, observacoes, criado_por)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'RECEBIDO',$10,$11,$12)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
            RETURNING id`,
           [
             codigo, String(titulo).trim(), descricao || null, categoria_id || null, cor || null,
-            marca || null, local_encontrado || null, data_encontrado, registrador_id || null,
+            marca || null, local_encontrado || null, data_encontrado, registrador_id, statusFinal,
             foto_url || null, observacoes || null, req.usuario.id,
           ]
         );
         const { rows: full } = await pool.query(`${SELECT_ITEM} WHERE i.id = $1`, [rows[0].id]);
         return res.status(201).json(mapItem(full[0]));
       } catch (e) {
-        if (e.code === '23505' && tentativa < 4) continue; // colisão de código -> tenta o próximo
+        if (e.code === '23505' && tentativa < 4) continue;
         throw e;
       }
     }
@@ -132,7 +152,7 @@ export async function criarItem(req, res) {
   }
 }
 
-// PUT /api/itens/:id  (staff)
+// PUT /api/itens/:id  (staff) — mantém o registrador atual se não vier outro.
 export async function atualizarItem(req, res) {
   const { id } = req.params;
   const {
@@ -145,7 +165,7 @@ export async function atualizarItem(req, res) {
     const { rowCount } = await pool.query(
       `UPDATE itens_achados SET
          titulo=$1, descricao=$2, categoria_id=$3, cor=$4, marca=$5,
-         local_encontrado=$6, data_encontrado=$7, registrador_id=$8,
+         local_encontrado=$6, data_encontrado=$7, registrador_id=COALESCE($8, registrador_id),
          foto_url=$9, observacoes=$10, status=COALESCE($11, status), atualizado_em=now()
        WHERE id=$12`,
       [String(titulo).trim(), descricao || null, categoria_id || null, cor || null, marca || null,
