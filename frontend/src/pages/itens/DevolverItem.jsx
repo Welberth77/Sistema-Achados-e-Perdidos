@@ -7,7 +7,7 @@ import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
-import { noMax, LIM } from '../../utils/validacao.js';
+import { noMax, LIM, cpfValido, formatarCpf } from '../../utils/validacao.js';
 
 export default function DevolverItem() {
   const { id } = useParams();
@@ -22,6 +22,8 @@ export default function DevolverItem() {
     recebedor_usuario_id: '',
     recebedor_nome: '',
     semConta: false,
+    tipoDocId: 'CPF',
+    docIdentidade: '',
     comprovante: '',
     observacao: '',
   });
@@ -50,6 +52,11 @@ export default function DevolverItem() {
     } else if (!form.recebedor_usuario_id) {
       e.recebedor_usuario_id = 'Selecione o dono que está recebendo.';
     }
+
+    if (!form.docIdentidade.trim()) e.docIdentidade = 'Informe o documento de identidade.';
+    else if (form.tipoDocId === 'CPF' && !cpfValido(form.docIdentidade)) e.docIdentidade = 'CPF inválido.';
+    else if (!noMax(form.docIdentidade, LIM.documento)) e.docIdentidade = `Máximo de ${LIM.documento} caracteres.`;
+
     if (!form.comprovante.trim()) e.comprovante = 'A comprovação de propriedade é obrigatória.';
     else if (!noMax(form.comprovante, LIM.observacoes)) e.comprovante = `Máximo de ${LIM.observacoes} caracteres.`;
     if (!noMax(form.observacao, LIM.observacoes)) e.observacao = `Máximo de ${LIM.observacoes} caracteres.`;
@@ -62,11 +69,13 @@ export default function DevolverItem() {
     if (!validar()) return;
     setEnviando(true);
     try {
+      const idLabel = form.tipoDocId === 'CPF' ? 'CPF' : 'Documento';
+      const comprovanteFinal = `Identidade (${idLabel}): ${form.docIdentidade.trim()} — Propriedade: ${form.comprovante.trim()}`;
       await registrarDevolucao({
         item_id: id,
         recebedor_usuario_id: form.semConta ? undefined : form.recebedor_usuario_id,
         recebedor_nome: form.semConta ? form.recebedor_nome : undefined,
-        comprovante: form.comprovante.trim(),
+        comprovante: comprovanteFinal,
         observacao: form.observacao.trim(),
       });
       navigate(`/itens/${id}`);
@@ -94,7 +103,7 @@ export default function DevolverItem() {
       <div className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-fg">Devolver item</h1>
         <p className="mt-1 text-sm text-muted">
-          Registre a entrega do item ao <strong className="text-fg">dono</strong>. É obrigatório comprovar a propriedade.
+          Registre a entrega do item ao <strong className="text-fg">dono</strong>. É obrigatório identificar quem recebe e comprovar a propriedade.
         </p>
       </div>
 
@@ -167,12 +176,40 @@ export default function DevolverItem() {
                 A pessoa não tem conta no sistema (informar o nome)
               </label>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Select
+                  label="Documento de identidade"
+                  className="w-full"
+                  value={form.tipoDocId}
+                  onChange={(e) =>
+                    setForm((f) => {
+                      const tipo = e.target.value;
+                      return { ...f, tipoDocId: tipo, docIdentidade: tipo === 'CPF' ? formatarCpf(f.docIdentidade) : f.docIdentidade };
+                    })
+                  }
+                  options={[
+                    { value: 'CPF', label: 'CPF' },
+                    { value: 'OUTRO', label: 'Outro documento' },
+                  ]}
+                />
+                <Input
+                  label={form.tipoDocId === 'CPF' ? 'Número do CPF' : 'Número do documento'}
+                  required
+                  value={form.docIdentidade}
+                  error={erros.docIdentidade}
+                  maxLength={LIM.documento}
+                  inputMode={form.tipoDocId === 'CPF' ? 'numeric' : 'text'}
+                  placeholder={form.tipoDocId === 'CPF' ? '000.000.000-00' : 'RG, CNH, passaporte…'}
+                  onChange={(e) => set('docIdentidade', form.tipoDocId === 'CPF' ? formatarCpf(e.target.value) : e.target.value)}
+                />
+              </div>
+
               <Input
                 label="Comprovação de propriedade"
                 required
                 value={form.comprovante}
                 error={erros.comprovante}
-                hint="Descreva a prova apresentada (documento, nota fiscal, característica exclusiva do item…)."
+                hint="Prova de que o item é dele (nota fiscal, característica exclusiva, foto…)."
                 maxLength={LIM.observacoes}
                 onChange={(e) => set('comprovante', e.target.value)}
               />

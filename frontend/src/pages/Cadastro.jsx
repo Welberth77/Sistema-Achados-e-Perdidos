@@ -46,7 +46,6 @@ export default function Cadastro() {
       }
       if (!telefoneValido(form.telefone)) e.telefone = 'Telefone inválido (inclua o DDD).';
       if (!noMax(form.matricula, LIM.matricula)) e.matricula = `Máximo de ${LIM.matricula} caracteres.`;
-      if (!noMax(form.observacoes, LIM.observacoes)) e.observacoes = `Máximo de ${LIM.observacoes} caracteres.`;
     }
     setErros(e);
     return Object.keys(e).length === 0;
@@ -71,7 +70,6 @@ export default function Cadastro() {
           tipo_documento: form.tipo_documento,
           documento: form.documento.trim() || null,
           telefone: form.telefone.trim() || null,
-          observacoes: form.observacoes.trim() || null,
         };
       }
       const { data } = await api.post('/auth/registrar', payload);
@@ -150,7 +148,7 @@ export default function Cadastro() {
               <p className="text-xs text-muted">
                 Preencha seus dados. Sua solicitação ficará pendente até um administrador aprovar.
               </p>
-              <Input label="Matrícula / SIAPE" value={form.matricula} error={erros.matricula} maxLength={LIM.matricula} onChange={(e) => set('matricula', e.target.value)} />
+              <Input label="SIAPE" value={form.matricula} error={erros.matricula} maxLength={LIM.matricula} onChange={(e) => set('matricula', e.target.value)} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Select
                   label="Tipo de documento"
@@ -183,7 +181,6 @@ export default function Cadastro() {
                 placeholder="(85) 99999-0000"
                 onChange={(e) => set('telefone', formatarTelefone(e.target.value))}
               />
-              <Input label="Observações" value={form.observacoes} error={erros.observacoes} maxLength={LIM.observacoes} onChange={(e) => set('observacoes', e.target.value)} />
             </div>
           )}
 

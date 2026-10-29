@@ -42,7 +42,13 @@ export async function alterarPapel(req, res) {
     // Servidores/admins viram também registradores (pessoal do balcão), p/ evitar confusão.
     if (['SERVIDOR', 'ADMINISTRADOR'].includes(papel) && rows[0].email) {
       const ex = await pool.query('SELECT id FROM registradores WHERE email = $1 LIMIT 1', [rows[0].email]);
-      if (!ex.rows.length) {
+      if (ex.rows.length) {
+        // já existe (ex.: foi dono/recebedor) -> garante que o vínculo vire SERVIDOR
+        await pool.query(
+          `UPDATE registradores SET vinculo = 'SERVIDOR', nome = $1, atualizado_em = now() WHERE id = $2`,
+          [rows[0].nome, ex.rows[0].id]
+        );
+      } else {
         await pool.query(
           `INSERT INTO registradores (nome, vinculo, email) VALUES ($1, 'SERVIDOR', $2)`,
           [rows[0].nome, rows[0].email]

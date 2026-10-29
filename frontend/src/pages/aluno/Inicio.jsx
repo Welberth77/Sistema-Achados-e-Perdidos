@@ -79,7 +79,8 @@ export default function Inicio() {
     setLoading(true);
     setErro('');
     try {
-      setItens(await listarAchados({ q, categoria, status }));
+      const achados = await listarAchados({ q, categoria, status });
+      setItens(achados.filter((i) => i.status !== 'DEVOLVIDO' && i.status !== 'DESCARTADO'));
       setPagina(1);
     } catch {
       setErro('Não foi possível carregar os itens.');

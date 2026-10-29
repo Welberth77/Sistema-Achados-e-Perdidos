@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listarItens, excluirItem } from '../../services/itens.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
-import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const STATUS = [
-  { value: '', label: 'Todos os status' },
   { value: 'RECEBIDO', label: 'Recebido' },
   { value: 'EM_CUSTODIA', label: 'Em custódia' },
   { value: 'EM_ANALISE', label: 'Em análise' },
@@ -23,7 +21,7 @@ export default function Itens() {
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusSel, setStatusSel] = useState([]);
   const [erroAcao, setErroAcao] = useState('');
   const [paraExcluir, setParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
@@ -31,7 +29,7 @@ export default function Itens() {
   async function carregar() {
     setLoading(true);
     try {
-      setDados(await listarItens({ q, status }));
+      setDados(await listarItens({ q }));
     } finally {
       setLoading(false);
     }
@@ -41,6 +39,15 @@ export default function Itens() {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+  }
+
+  const visiveis = useMemo(
+    () => (statusSel.length ? dados.filter((d) => statusSel.includes(d.status)) : dados),
+    [dados, statusSel]
+  );
 
   async function confirmarExclusao() {
     if (!paraExcluir) return;
@@ -61,10 +68,10 @@ export default function Itens() {
   const colunas = [
     { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
-    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
+    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—', sortValue: (row) => row.categoria?.nome || '' },
     { key: 'local_encontrado', header: 'Local' },
     { key: 'data_encontrado', header: 'Data', className: 'tabular-nums text-muted' },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} />, sortValue: (row) => row.status },
     {
       key: 'acoes',
       header: 'Ações',
@@ -93,23 +100,55 @@ export default function Itens() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="min-w-56 flex-1">
-          <Input
-            label="Pesquisar"
-            placeholder="Título ou descrição…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && carregar()}
-          />
+      <div className="mb-4 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1">
+            <Input
+              label="Pesquisar"
+              placeholder="Título ou descrição…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregar()}
+            />
+          </div>
+          <Button variant="outline" onClick={carregar}>Buscar</Button>
         </div>
-        <Select label="Status" options={STATUS} value={status} onChange={(e) => setStatus(e.target.value)} />
-        <Button variant="outline" onClick={carregar}>Buscar</Button>
+
+        <div className="mt-3">
+          <span className="mr-2 text-xs font-medium text-muted">Situação:</span>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {STATUS.map((st) => {
+              const ativo = statusSel.includes(st.value);
+              return (
+                <button
+                  key={st.value}
+                  type="button"
+                  aria-pressed={ativo}
+                  onClick={() => toggleStatus(st.value)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    ativo ? 'border-primary bg-primary-soft text-link' : 'border-border text-muted hover:text-fg'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              );
+            })}
+            {statusSel.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setStatusSel([])}
+                className="rounded-full px-2 py-1 text-xs font-medium text-link underline-offset-2 hover:underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <Table
         columns={colunas}
-        data={dados}
+        data={visiveis}
         loading={loading}
         onRowClick={(row) => navigate(`/itens/${row.id}`)}
         emptyMessage="Nenhum item encontrado. Ajuste os filtros ou cadastre um novo item."
