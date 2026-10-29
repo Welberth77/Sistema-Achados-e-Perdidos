@@ -10,3 +10,8 @@ export async function criarRelato(payload) {
   const { data } = await api.post('/relatos', payload);
   return data;
 }
+
+export async function minhasCorrespondencias() {
+  const { data } = await api.get('/relatos/meus/correspondencias');
+  return data.data ?? data;
+}

@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  listarRelatos, meusRelatos, obterRelato, listarCorrespondencias,
+  listarRelatos, meusRelatos, minhasCorrespondencias, obterRelato, listarCorrespondencias,
   criarRelato, atualizarRelato, excluirRelato,
 } from '../controllers/relatosController.js';
 import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
@@ -10,6 +10,7 @@ const staff = exigePapel('ADMINISTRADOR', 'SERVIDOR');
 
 // Rotas específicas antes das com parâmetro.
 router.get('/meus', autenticarToken, meusRelatos);          // qualquer autenticado (aluno)
+router.get('/meus/correspondencias', autenticarToken, minhasCorrespondencias); // aluno: itens parecidos
 router.post('/', autenticarToken, criarRelato);             // qualquer autenticado (aluno)
 router.get('/', autenticarToken, staff, listarRelatos);     // staff: todos os relatos
 router.get('/:id', autenticarToken, staff, obterRelato);

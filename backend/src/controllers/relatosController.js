@@ -190,3 +190,54 @@ export async function excluirRelato(req, res) {
     return res.status(500).json({ error: 'Erro ao excluir o relato.' });
   }
 }
+
+// GET /api/relatos/meus/correspondencias — itens achados parecidos com os relatos do próprio aluno.
+export async function minhasCorrespondencias(req, res) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT r.id AS relato_id, r.codigo AS relato_codigo, r.titulo AS relato_titulo,
+              i.id AS item_id, i.codigo AS item_codigo, i.titulo AS item_titulo,
+              i.local_encontrado, i.data_encontrado, i.status,
+              c.nome AS categoria_nome,
+              ((CASE WHEN r.categoria_id IS NOT NULL AND i.categoria_id = r.categoria_id THEN 60 ELSE 0 END)
+             + (CASE WHEN r.titulo <> '' AND i.titulo ILIKE '%' || r.titulo || '%' THEN 40 ELSE 0 END)) AS score
+       FROM relatos_perda r
+       JOIN itens_achados i
+         ON i.status NOT IN ('DEVOLVIDO','DESCARTADO')
+        AND ((r.categoria_id IS NOT NULL AND i.categoria_id = r.categoria_id)
+          OR (r.titulo <> '' AND i.titulo ILIKE '%' || r.titulo || '%'))
+       LEFT JOIN categorias c ON c.id = i.categoria_id
+       WHERE r.criado_por = $1
+         AND r.status NOT IN ('ENCERRADO','CANCELADO')
+       ORDER BY r.criado_em DESC, score DESC, i.data_encontrado DESC`,
+      [req.usuario.id]
+    );
+
+    const mapa = new Map();
+    for (const row of rows) {
+      if (!mapa.has(row.relato_id)) {
+        mapa.set(row.relato_id, {
+          relato: { id: row.relato_id, codigo: row.relato_codigo, titulo: row.relato_titulo },
+          itens: [],
+        });
+      }
+      const g = mapa.get(row.relato_id);
+      if (g.itens.length < 5) {
+        g.itens.push({
+          id: row.item_id,
+          codigo: row.item_codigo,
+          titulo: row.item_titulo,
+          local_encontrado: row.local_encontrado,
+          data_encontrado: row.data_encontrado,
+          status: row.status,
+          pontuacao: Number(row.score),
+          categoria: row.categoria_nome ? { nome: row.categoria_nome } : null,
+        });
+      }
+    }
+    return res.json(Array.from(mapa.values()));
+  } catch (err) {
+    console.error('Erro ao buscar correspondências do aluno:', err);
+    return res.status(500).json({ error: 'Erro ao carregar correspondências.' });
+  }
+}
