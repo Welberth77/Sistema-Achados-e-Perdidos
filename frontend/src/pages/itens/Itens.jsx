@@ -5,6 +5,7 @@ import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { dataBR } from '../../utils/formato.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const STATUS = [
@@ -70,7 +71,7 @@ export default function Itens() {
     { key: 'titulo', header: 'Título' },
     { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—', sortValue: (row) => row.categoria?.nome || '' },
     { key: 'local_encontrado', header: 'Local' },
-    { key: 'data_encontrado', header: 'Data', className: 'tabular-nums text-muted' },
+    { key: 'data_encontrado', header: 'Data', render: (row) => dataBR(row.data_encontrado), className: 'tabular-nums text-muted' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} />, sortValue: (row) => row.status },
     {
       key: 'acoes',

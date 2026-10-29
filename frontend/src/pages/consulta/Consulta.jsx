@@ -8,6 +8,7 @@ import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import { hojeISO, LIM } from '../../utils/validacao.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { dataBR } from '../../utils/formato.js';
 
 const STATUS = [
   { value: '', label: 'Todos os status' },
@@ -60,7 +61,7 @@ export default function Consulta() {
     { key: 'titulo', header: 'Título' },
     { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
     { key: 'local_encontrado', header: 'Local' },
-    { key: 'data_encontrado', header: 'Data', className: 'tabular-nums text-muted' },
+    { key: 'data_encontrado', header: 'Data', render: (row) => dataBR(row.data_encontrado), className: 'tabular-nums text-muted' },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
   ];
 

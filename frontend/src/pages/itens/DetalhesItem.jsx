@@ -5,6 +5,7 @@ import { registrarCustodia } from '../../services/custodia.js';
 import { criarCaso } from '../../services/casos.js';
 import { listarRelatos } from '../../services/relatos.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { dataBR } from '../../utils/formato.js';
 import Button from '../../components/Button.jsx';
 import Modal from '../../components/Modal.jsx';
 import Input from '../../components/Input.jsx';
@@ -151,7 +152,7 @@ export default function DetalhesItem() {
         <Linha rotulo="Cor" valor={item.cor} />
         <Linha rotulo="Marca" valor={item.marca} />
         <Linha rotulo="Local encontrado" valor={item.local_encontrado} />
-        <Linha rotulo="Data encontrado" valor={item.data_encontrado} />
+        <Linha rotulo="Data encontrado" valor={dataBR(item.data_encontrado)} />
         <Linha rotulo="Registrado por (servidor)" valor={item.registrador?.nome} />
       </section>
 

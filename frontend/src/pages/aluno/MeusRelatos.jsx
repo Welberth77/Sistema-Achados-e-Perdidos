@@ -7,8 +7,8 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 
 function dataCurta(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR');
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
 }
 
 export default function MeusRelatos() {
