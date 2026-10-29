@@ -77,6 +77,7 @@ export default function DetalhesCaso() {
     );
 
   const encerravel = caso.status !== 'ENCERRADO' && caso.status !== 'CANCELADO';
+  const itemFinalizado = ['DEVOLVIDO', 'DESCARTADO'].includes(caso.item?.status);
 
   return (
     <div className="max-w-3xl">
@@ -113,9 +114,17 @@ export default function DetalhesCaso() {
         />
       </section>
 
+      {encerravel && !itemFinalizado && (
+        <p className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
+          Para encerrar o caso, o item vinculado precisa estar <span className="font-medium">devolvido</span> ou <span className="font-medium">descartado</span>.
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => navigate('/casos')}>Voltar</Button>
-        {encerravel && <Button onClick={() => setConfirmando(true)}>Encerrar caso</Button>}
+        {encerravel && (
+          <Button onClick={() => setConfirmando(true)} disabled={!itemFinalizado}>Encerrar caso</Button>
+        )}
       </div>
 
       <ConfirmDialog

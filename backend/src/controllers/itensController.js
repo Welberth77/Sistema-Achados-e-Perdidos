@@ -113,7 +113,12 @@ export async function criarItem(req, res) {
   if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: 'Informe o título do item.' });
   if (!data_encontrado) return res.status(400).json({ error: 'Informe a data em que foi encontrado.' });
 
-  const statusFinal = STATUS_ITEM.includes(status) ? status : 'RECEBIDO';
+  // No cadastro, o item só pode entrar como RECEBIDO ou EM_CUSTODIA.
+  const STATUS_CADASTRO = ['RECEBIDO', 'EM_CUSTODIA'];
+  if (status && !STATUS_CADASTRO.includes(status)) {
+    return res.status(422).json({ error: 'Item só pode ser cadastrado como Recebido ou Em custódia.' });
+  }
+  const statusFinal = status || 'RECEBIDO';
   const ano = new Date().getFullYear();
   try {
     const registrador_id = await registradorDoUsuario(req.usuario.id);

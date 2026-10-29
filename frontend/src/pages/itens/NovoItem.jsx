@@ -16,6 +16,10 @@ const STATUS = [
   { value: 'DESCARTADO', label: 'Descartado' },
 ];
 
+// No cadastro, um item só pode entrar como Recebido ou Em custódia.
+// Os demais status (análise, devolução, devolvido, descartado) vêm do fluxo.
+const STATUS_CADASTRO = STATUS.filter((s) => s.value === 'RECEBIDO' || s.value === 'EM_CUSTODIA');
+
 export default function NovoItem() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -61,6 +65,7 @@ export default function NovoItem() {
   }, [id, editando]);
 
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
+  const statusOptions = editando ? STATUS : STATUS_CADASTRO;
 
   function validar() {
     const e = {};
@@ -142,7 +147,7 @@ export default function NovoItem() {
           <Select
             label="Status"
             className="w-full"
-            options={STATUS}
+            options={statusOptions}
             value={form.status}
             onChange={(e) => set('status', e.target.value)}
           />
