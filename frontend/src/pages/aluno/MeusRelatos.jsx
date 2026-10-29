@@ -5,6 +5,7 @@ import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
+import { SETOR_NOME, SETOR_LOCAL } from '../../config/setor.js';
 
 function dataCurta(iso) {
   if (!iso) return '—';
@@ -59,7 +60,7 @@ export default function MeusRelatos() {
         <section className="mb-6 rounded-lg border border-primary/40 bg-primary-soft p-4">
           <h2 className="text-sm font-semibold text-fg">Possíveis correspondências para os seus relatos</h2>
           <p className="mt-0.5 text-xs text-muted">
-            Itens achados parecidos com o que você relatou. Se reconhecer algum, procure o setor levando um documento.
+            Itens achados parecidos com o que você relatou. Se reconhecer algum, retire no {SETOR_NOME} ({SETOR_LOCAL}) levando um documento.
           </p>
           <div className="mt-3 space-y-3">
             {correspondencias.map((g) => (
@@ -116,6 +117,7 @@ export default function MeusRelatos() {
             <LinhaDetalhe rotulo="Categoria" valor={detalhe.categoria?.nome} />
             <LinhaDetalhe rotulo="Local" valor={detalhe.local_encontrado} />
             <LinhaDetalhe rotulo="Encontrado em" valor={dataCurta(detalhe.data_encontrado)} />
+            <LinhaDetalhe rotulo="Retirada" valor={`${SETOR_NOME} — ${SETOR_LOCAL}`} />
             <p className="mt-4 text-xs text-muted">
               Reconheceu o item? Procure o setor responsável levando um documento de identificação para retirá-lo.
             </p>

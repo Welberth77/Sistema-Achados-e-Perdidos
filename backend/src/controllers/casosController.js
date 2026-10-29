@@ -12,7 +12,7 @@ function mapCaso(row) {
     item_achado_id: row.item_achado_id,
     relato_perda_id: row.relato_perda_id,
     responsavel_id: row.responsavel_id,
-    item: row.item_codigo ? { id: row.item_achado_id, codigo: row.item_codigo, titulo: row.item_titulo } : null,
+    item: row.item_codigo ? { id: row.item_achado_id, codigo: row.item_codigo, titulo: row.item_titulo, status: row.item_status } : null,
     relato: row.relato_codigo ? { id: row.relato_perda_id, codigo: row.relato_codigo, titulo: row.relato_titulo } : null,
     responsavel: row.responsavel_nome ? { id: row.responsavel_id, nome: row.responsavel_nome } : null,
   };
@@ -21,7 +21,7 @@ function mapCaso(row) {
 const SELECT_CASO = `
   SELECT c.id, c.codigo, c.status, c.descricao, c.data_abertura, c.data_encerramento,
          c.item_achado_id, c.relato_perda_id, c.responsavel_id,
-         i.codigo AS item_codigo, i.titulo AS item_titulo,
+         i.codigo AS item_codigo, i.titulo AS item_titulo, i.status AS item_status,
          r.codigo AS relato_codigo, r.titulo AS relato_titulo,
          u.nome   AS responsavel_nome
   FROM casos c
@@ -108,14 +108,51 @@ export async function criarCaso(req, res) {
 export async function encerrarCaso(req, res) {
   const { id } = req.params;
   try {
-    const result = await pool.query(
-      `UPDATE casos SET status = 'ENCERRADO', data_encerramento = now() WHERE id = $1 RETURNING *`,
+    // Confere a situação do caso e do item vinculado antes de encerrar.
+    const atual = await pool.query(
+      `SELECT c.status AS caso_status, c.relato_perda_id, i.status AS item_status
+         FROM casos c
+         JOIN itens_achados i ON i.id = c.item_achado_id
+        WHERE c.id = $1`,
       [id]
     );
-    if (result.rowCount === 0) {
+    if (atual.rowCount === 0) {
       return res.status(404).json({ error: 'Caso não encontrado.' });
     }
-    return res.json({ mensagem: 'Caso encerrado com sucesso.', caso: result.rows[0] });
+    const { caso_status, relato_perda_id, item_status } = atual.rows[0];
+    if (caso_status === 'ENCERRADO' || caso_status === 'CANCELADO') {
+      return res.status(409).json({ error: 'Este caso já está encerrado ou cancelado.' });
+    }
+    // Regra: o item só pode encerrar o caso depois de devolvido ou descartado.
+    if (item_status !== 'DEVOLVIDO' && item_status !== 'DESCARTADO') {
+      return res.status(422).json({
+        error: 'Só é possível encerrar o caso quando o item estiver devolvido ou descartado.',
+      });
+    }
+
+    // Encerra o caso e, junto, o relato de perda vinculado (reflete na área do aluno).
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `UPDATE casos SET status = 'ENCERRADO', data_encerramento = now() WHERE id = $1 RETURNING *`,
+        [id]
+      );
+      if (relato_perda_id) {
+        await client.query(
+          `UPDATE relatos_perda SET status = 'ENCERRADO', atualizado_em = now()
+            WHERE id = $1 AND status NOT IN ('ENCERRADO', 'CANCELADO')`,
+          [relato_perda_id]
+        );
+      }
+      await client.query('COMMIT');
+      return res.json({ mensagem: 'Caso encerrado com sucesso.', caso: result.rows[0] });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error('Erro ao encerrar caso:', err);
     return res.status(500).json({ error: 'Erro interno ao encerrar caso.' });
