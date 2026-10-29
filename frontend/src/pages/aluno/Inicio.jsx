@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listarAchados } from '../../services/achados.js';
 import { CATEGORIAS_PUBLICAS } from '../../services/publico.js';
 import Input from '../../components/Input.jsx';
@@ -6,16 +6,16 @@ import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
 
 const POR_PAGINA = 12;
 
-const STATUS_OPCOES = [
-  { value: '', label: 'Todos os status' },
+// Situações que o aluno pode ver (itens devolvidos/descartados não aparecem aqui).
+const STATUS = [
   { value: 'RECEBIDO', label: 'Recebido' },
   { value: 'EM_CUSTODIA', label: 'Em custódia' },
   { value: 'EM_ANALISE', label: 'Em análise' },
   { value: 'EM_DEVOLUCAO', label: 'Em devolução' },
-  { value: 'DEVOLVIDO', label: 'Devolvido' },
 ];
 
 function dataCurta(iso) {
@@ -56,7 +56,7 @@ export default function Inicio() {
   const [erro, setErro] = useState('');
   const [q, setQ] = useState('');
   const [categoria, setCategoria] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusSel, setStatusSel] = useState([]); // múltipla seleção de situações
   const [pagina, setPagina] = useState(1);
   const [detalhe, setDetalhe] = useState(null); // item selecionado para o modal
   const [vista, setVista] = useState(() => {
@@ -79,7 +79,7 @@ export default function Inicio() {
     setLoading(true);
     setErro('');
     try {
-      const achados = await listarAchados({ q, categoria, status });
+      const achados = await listarAchados({ q, categoria });
       setItens(achados.filter((i) => i.status !== 'DEVOLVIDO' && i.status !== 'DESCARTADO'));
       setPagina(1);
     } catch {
@@ -94,15 +94,31 @@ export default function Inicio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+    setPagina(1);
+  }
+
+  function limparStatus() {
+    setStatusSel([]);
+    setPagina(1);
+  }
+
   const catOptions = [
     { value: '', label: 'Todas as categorias' },
     ...CATEGORIAS_PUBLICAS.map((c) => ({ value: c, label: c })),
   ];
 
-  const totalPaginas = Math.max(1, Math.ceil(itens.length / POR_PAGINA));
+  // Filtro de situação aplicado no cliente (igual às telas de admin/servidor).
+  const itensFiltrados = useMemo(
+    () => (statusSel.length ? itens.filter((i) => statusSel.includes(i.status)) : itens),
+    [itens, statusSel]
+  );
+
+  const totalPaginas = Math.max(1, Math.ceil(itensFiltrados.length / POR_PAGINA));
   const paginaSegura = Math.min(pagina, totalPaginas);
   const inicio = (paginaSegura - 1) * POR_PAGINA;
-  const visiveis = itens.slice(inicio, inicio + POR_PAGINA);
+  const visiveis = itensFiltrados.slice(inicio, inicio + POR_PAGINA);
 
   const btnVista = (ativa) =>
     `grid h-8 w-8 place-items-center rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -119,20 +135,25 @@ export default function Inicio() {
         </p>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="min-w-56 flex-1">
-          <Input
-            label="Pesquisar"
-            placeholder="Ex.: mochila, celular, chave…"
-            value={q}
-            maxLength={120}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && carregar()}
-          />
+      <div className="mb-5 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1">
+            <Input
+              label="Pesquisar"
+              placeholder="Ex.: mochila, celular, chave…"
+              value={q}
+              maxLength={120}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregar()}
+            />
+          </div>
+          <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
+          <Button variant="outline" onClick={carregar}>Buscar</Button>
         </div>
-        <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
-        <Select label="Status" options={STATUS_OPCOES} value={status} onChange={(e) => setStatus(e.target.value)} />
-        <Button variant="outline" onClick={carregar}>Buscar</Button>
+
+        <div className="mt-4">
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={limparStatus} />
+        </div>
       </div>
 
       {erro && (
@@ -145,7 +166,7 @@ export default function Inicio() {
       {!erro && (
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="text-sm text-muted" aria-live="polite">
-            {loading ? 'Carregando…' : `${itens.length} ${itens.length === 1 ? 'item' : 'itens'}`}
+            {loading ? 'Carregando…' : `${itensFiltrados.length} ${itensFiltrados.length === 1 ? 'item' : 'itens'}`}
           </p>
           <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-surface p-0.5" role="group" aria-label="Modo de visualização">
             <button type="button" className={btnVista(vista === 'cards')} aria-label="Ver em cards" aria-pressed={vista === 'cards'} onClick={() => setVista('cards')}>
@@ -158,7 +179,7 @@ export default function Inicio() {
         </div>
       )}
 
-      {loading ? null : itens.length === 0 ? (
+      {loading ? null : itensFiltrados.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
           Nenhum item encontrado. Tente outra busca ou registre um relato de perda.
         </div>

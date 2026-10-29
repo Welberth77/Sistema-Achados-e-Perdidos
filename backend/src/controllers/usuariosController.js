@@ -81,9 +81,22 @@ export async function excluirUsuario(req, res) {
   }
 
   try {
-    const { rowCount } = await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
-    if (!rowCount) {
+    const del = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING email', [id]);
+    if (!del.rowCount) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    // Remove também o registrador correspondente (mesmo e-mail), desde que não
+    // haja itens, relatos ou devoluções vinculados a ele (preserva o histórico).
+    const email = del.rows[0].email;
+    if (email) {
+      await pool.query(
+        `DELETE FROM registradores r
+          WHERE r.email = $1
+            AND NOT EXISTS (SELECT 1 FROM itens_achados i WHERE i.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM relatos_perda rp WHERE rp.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM devolucoes d WHERE d.recebedor_id = r.id)`,
+        [email]
+      );
     }
     return res.status(204).end();
   } catch (err) {
