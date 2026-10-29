@@ -62,6 +62,12 @@ export async function atualizarRegistrador(req, res) {
   if (!nome || !String(nome).trim()) return res.status(400).json({ error: 'Informe o nome.' });
   if (!vinculo) return res.status(400).json({ error: 'Informe o vínculo.' });
   try {
+    if (req.usuario.papel !== 'ADMINISTRADOR') {
+      const dono = await pool.query('SELECT email FROM registradores WHERE id = $1', [id]);
+      if (dono.rows.length && dono.rows[0].email && dono.rows[0].email === req.usuario.email) {
+        return res.status(403).json({ error: 'Você não pode alterar o seu próprio registrador. Peça a um administrador.' });
+      }
+    }
     const { rows } = await pool.query(
       `UPDATE registradores SET
          nome=$1, vinculo=$2, matricula=$3, tipo_documento=$4, documento=$5,
@@ -82,6 +88,12 @@ export async function atualizarRegistrador(req, res) {
 // DELETE /api/registradores/:id  (staff)
 export async function excluirRegistrador(req, res) {
   try {
+    if (req.usuario.papel !== 'ADMINISTRADOR') {
+      const dono = await pool.query('SELECT email FROM registradores WHERE id = $1', [req.params.id]);
+      if (dono.rows.length && dono.rows[0].email && dono.rows[0].email === req.usuario.email) {
+        return res.status(403).json({ error: 'Você não pode excluir o seu próprio registrador. Peça a um administrador.' });
+      }
+    }
     const { rowCount } = await pool.query('DELETE FROM registradores WHERE id = $1', [req.params.id]);
     if (!rowCount) return res.status(404).json({ error: 'Registrador não encontrado.' });
     return res.status(204).end();

@@ -7,6 +7,7 @@ import Input from '../../components/Input.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import { dataBR } from '../../utils/formato.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
 
 const STATUS = [
   { value: 'RECEBIDO', label: 'Recebido' },
@@ -116,34 +117,7 @@ export default function Itens() {
         </div>
 
         <div className="mt-3">
-          <span className="mr-2 text-xs font-medium text-muted">Situação:</span>
-          <div className="mt-1 flex flex-wrap gap-2">
-            {STATUS.map((st) => {
-              const ativo = statusSel.includes(st.value);
-              return (
-                <button
-                  key={st.value}
-                  type="button"
-                  aria-pressed={ativo}
-                  onClick={() => toggleStatus(st.value)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    ativo ? 'border-primary bg-primary-soft text-link' : 'border-border text-muted hover:text-fg'
-                  }`}
-                >
-                  {st.label}
-                </button>
-              );
-            })}
-            {statusSel.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setStatusSel([])}
-                className="rounded-full px-2 py-1 text-xs font-medium text-link underline-offset-2 hover:underline"
-              >
-                Limpar
-              </button>
-            )}
-          </div>
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={() => setStatusSel([])} />
         </div>
       </div>
 

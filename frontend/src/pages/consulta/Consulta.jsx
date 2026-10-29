@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listarItens } from '../../services/itens.js';
 import { listarCategorias } from '../../services/categorias.js';
@@ -6,12 +6,12 @@ import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
-import { hojeISO, LIM } from '../../utils/validacao.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
+import { hojeISO, LIM } from '../../utils/validacao.js';
 import { dataBR } from '../../utils/formato.js';
 
 const STATUS = [
-  { value: '', label: 'Todos os status' },
   { value: 'RECEBIDO', label: 'Recebido' },
   { value: 'EM_CUSTODIA', label: 'Em custódia' },
   { value: 'EM_ANALISE', label: 'Em análise' },
@@ -23,13 +23,8 @@ const STATUS = [
 export default function Consulta() {
   const navigate = useNavigate();
   const [categorias, setCategorias] = useState([]);
-  const [filtros, setFiltros] = useState({
-    q: '',
-    categoria_id: '',
-    status: '',
-    data_inicio: '',
-    data_fim: '',
-  });
+  const [filtros, setFiltros] = useState({ q: '', categoria_id: '', data_inicio: '', data_fim: '' });
+  const [statusSel, setStatusSel] = useState([]);
   const [resultado, setResultado] = useState([]);
   const [loading, setLoading] = useState(false);
   const [buscou, setBuscou] = useState(false);
@@ -39,6 +34,10 @@ export default function Consulta() {
   }, []);
 
   const set = (campo, valor) => setFiltros((f) => ({ ...f, [campo]: valor }));
+
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+  }
 
   async function buscar() {
     setLoading(true);
@@ -51,18 +50,24 @@ export default function Consulta() {
   }
 
   function limpar() {
-    setFiltros({ q: '', categoria_id: '', status: '', data_inicio: '', data_fim: '' });
+    setFiltros({ q: '', categoria_id: '', data_inicio: '', data_fim: '' });
+    setStatusSel([]);
     setResultado([]);
     setBuscou(false);
   }
 
+  const visiveis = useMemo(
+    () => (statusSel.length ? resultado.filter((r) => statusSel.includes(r.status)) : resultado),
+    [resultado, statusSel]
+  );
+
   const colunas = [
     { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
-    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
+    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—', sortValue: (row) => row.categoria?.nome || '' },
     { key: 'local_encontrado', header: 'Local' },
     { key: 'data_encontrado', header: 'Data', render: (row) => dataBR(row.data_encontrado), className: 'tabular-nums text-muted' },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} />, sortValue: (row) => row.status },
   ];
 
   return (
@@ -73,7 +78,7 @@ export default function Consulta() {
       </div>
 
       <div className="mb-6 rounded-lg border border-border bg-surface p-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
             <Input
               label="Termo"
@@ -93,34 +98,16 @@ export default function Consulta() {
           >
             <option value="">Todas</option>
             {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
+              <option key={c.id} value={c.id}>{c.nome}</option>
             ))}
           </Select>
 
-          <Select
-            label="Status"
-            className="w-full"
-            options={STATUS}
-            value={filtros.status}
-            onChange={(e) => set('status', e.target.value)}
-          />
+          <Input label="Encontrado de" type="date" value={filtros.data_inicio} onChange={(e) => set('data_inicio', e.target.value)} max={hojeISO()} />
+          <Input label="Encontrado até" type="date" value={filtros.data_fim} onChange={(e) => set('data_fim', e.target.value)} max={hojeISO()} />
+        </div>
 
-          <Input
-            label="Encontrado de"
-            type="date"
-            value={filtros.data_inicio}
-            onChange={(e) => set('data_inicio', e.target.value)}
-            max={hojeISO()}
-          />
-          <Input
-            label="Encontrado até"
-            type="date"
-            value={filtros.data_fim}
-            onChange={(e) => set('data_fim', e.target.value)}
-            max={hojeISO()}
-          />
+        <div className="mt-4">
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={() => setStatusSel([])} />
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -131,15 +118,14 @@ export default function Consulta() {
 
       {buscou && (
         <p className="mb-2 text-sm text-muted">
-          {resultado.length} resultado{resultado.length === 1 ? '' : 's'} encontrado
-          {resultado.length === 1 ? '' : 's'}.
+          {visiveis.length} resultado{visiveis.length === 1 ? '' : 's'} encontrado{visiveis.length === 1 ? '' : 's'}.
         </p>
       )}
 
       {buscou ? (
         <Table
           columns={colunas}
-          data={resultado}
+          data={visiveis}
           loading={loading}
           emptyMessage="Nenhum item corresponde aos filtros."
           onRowClick={(row) => navigate(`/itens/${row.id}`)}

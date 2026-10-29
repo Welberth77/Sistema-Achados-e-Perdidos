@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { listarRegistradores, excluirRegistrador } from '../../services/registradores.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
@@ -22,6 +23,7 @@ const VINCULOS = [
 
 export default function Registradores() {
   const navigate = useNavigate();
+  const { usuario } = useAuth();
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -68,12 +70,17 @@ export default function Registradores() {
     {
       key: 'acoes',
       header: 'Ações',
-      render: (row) => (
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => navigate(`/registradores/${row.id}/editar`)}>Editar</Button>
-          <Button size="sm" variant="danger" onClick={() => setParaExcluir(row)}>Excluir</Button>
-        </div>
-      ),
+      render: (row) => {
+        const ehProprio =
+          usuario?.papel !== 'ADMINISTRADOR' && row.email && usuario?.email && row.email === usuario.email;
+        if (ehProprio) return <span className="text-xs text-muted">Você — peça ao admin</span>;
+        return (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate(`/registradores/${row.id}/editar`)}>Editar</Button>
+            <Button size="sm" variant="danger" onClick={() => setParaExcluir(row)}>Excluir</Button>
+          </div>
+        );
+      },
     },
   ];
 

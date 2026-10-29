@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listarRelatos, excluirRelato } from '../../services/relatos.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
-import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
-import { dataBR } from '../../utils/formato.js';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import { dataBR } from '../../utils/formato.js';
 
 const STATUS = [
-  { value: '', label: 'Todos os status' },
   { value: 'ABERTO', label: 'Aberto' },
   { value: 'EM_ANALISE', label: 'Em análise' },
   { value: 'CORRESPONDENCIA', label: 'Correspondência' },
@@ -23,7 +22,7 @@ export default function Relatos() {
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusSel, setStatusSel] = useState([]);
   const [erroAcao, setErroAcao] = useState('');
   const [paraExcluir, setParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
@@ -31,7 +30,7 @@ export default function Relatos() {
   async function carregar() {
     setLoading(true);
     try {
-      setDados(await listarRelatos({ q, status }));
+      setDados(await listarRelatos({ q }));
     } finally {
       setLoading(false);
     }
@@ -41,6 +40,15 @@ export default function Relatos() {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+  }
+
+  const visiveis = useMemo(
+    () => (statusSel.length ? dados.filter((d) => statusSel.includes(d.status)) : dados),
+    [dados, statusSel]
+  );
 
   async function confirmarExclusao() {
     if (!paraExcluir) return;
@@ -61,10 +69,10 @@ export default function Relatos() {
   const colunas = [
     { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
-    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
+    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—', sortValue: (row) => row.categoria?.nome || '' },
     { key: 'local_perda', header: 'Local' },
     { key: 'data_perda', header: 'Data', render: (row) => dataBR(row.data_perda), className: 'tabular-nums text-muted' },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} />, sortValue: (row) => row.status },
     {
       key: 'acoes',
       header: 'Ações',
@@ -92,23 +100,27 @@ export default function Relatos() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="min-w-56 flex-1">
-          <Input
-            label="Pesquisar"
-            placeholder="Título ou descrição…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && carregar()}
-          />
+      <div className="mb-4 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1">
+            <Input
+              label="Pesquisar"
+              placeholder="Título ou descrição…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregar()}
+            />
+          </div>
+          <Button variant="outline" onClick={carregar}>Buscar</Button>
         </div>
-        <Select label="Status" options={STATUS} value={status} onChange={(e) => setStatus(e.target.value)} />
-        <Button variant="outline" onClick={carregar}>Buscar</Button>
+        <div className="mt-3">
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={() => setStatusSel([])} />
+        </div>
       </div>
 
       <Table
         columns={colunas}
-        data={dados}
+        data={visiveis}
         loading={loading}
         onRowClick={(row) => navigate(`/relatos/${row.id}`)}
         emptyMessage="Nenhum relato encontrado."
