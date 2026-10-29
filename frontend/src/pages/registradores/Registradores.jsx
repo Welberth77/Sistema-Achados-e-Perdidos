@@ -24,6 +24,8 @@ const VINCULOS = [
 export default function Registradores() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
+  const ehAdmin = usuario?.papel === 'ADMINISTRADOR';
+
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -67,31 +69,31 @@ export default function Registradores() {
     { key: 'vinculo', header: 'Vínculo', render: (row) => VINCULO_LABEL[row.vinculo] || row.vinculo || '—' },
     { key: 'documento', header: 'Documento', render: (row) => row.documento || row.matricula || '—', className: 'tabular-nums' },
     { key: 'contato', header: 'Contato', render: (row) => row.telefone || row.email || '—' },
-    {
+  ];
+
+  if (ehAdmin) {
+    colunas.push({
       key: 'acoes',
       header: 'Ações',
-      render: (row) => {
-        const ehProprio =
-          usuario?.papel !== 'ADMINISTRADOR' && row.email && usuario?.email && row.email === usuario.email;
-        if (ehProprio) return <span className="text-xs text-muted">Você — peça ao admin</span>;
-        return (
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => navigate(`/registradores/${row.id}/editar`)}>Editar</Button>
-            <Button size="sm" variant="danger" onClick={() => setParaExcluir(row)}>Excluir</Button>
-          </div>
-        );
-      },
-    },
-  ];
+      render: (row) => (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => navigate(`/registradores/${row.id}/editar`)}>Editar</Button>
+          <Button size="sm" variant="danger" onClick={() => setParaExcluir(row)}>Excluir</Button>
+        </div>
+      ),
+    });
+  }
 
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-fg">Registradores</h1>
-          <p className="mt-1 text-sm text-muted">Pessoas autorizadas a registrar itens e relatos.</p>
+          <p className="mt-1 text-sm text-muted">
+            Pessoas autorizadas a registrar itens e relatos.{!ehAdmin && ' A gestão é feita pelo administrador.'}
+          </p>
         </div>
-        <Button onClick={() => navigate('/registradores/novo')}>Novo registrador</Button>
+        {ehAdmin && <Button onClick={() => navigate('/registradores/novo')}>Novo registrador</Button>}
       </div>
 
       {erroAcao && (

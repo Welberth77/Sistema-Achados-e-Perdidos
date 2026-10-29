@@ -6,11 +6,13 @@ import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 const staff = exigePapel('ADMINISTRADOR', 'SERVIDOR');
+const admin = exigePapel('ADMINISTRADOR');
 
+// Ver a lista: equipe (admin/servidor). Gerenciar: só ADMINISTRADOR.
 router.get('/', autenticarToken, staff, listarRegistradores);
 router.get('/:id', autenticarToken, staff, obterRegistrador);
-router.post('/', autenticarToken, staff, criarRegistrador);
-router.put('/:id', autenticarToken, staff, atualizarRegistrador);
-router.delete('/:id', autenticarToken, staff, excluirRegistrador);
+router.post('/', autenticarToken, admin, criarRegistrador);
+router.put('/:id', autenticarToken, admin, atualizarRegistrador);
+router.delete('/:id', autenticarToken, admin, excluirRegistrador);
 
 export default router;

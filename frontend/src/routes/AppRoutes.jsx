@@ -67,8 +67,8 @@ export default function AppRoutes() {
         <Route path="/categorias" element={<Categorias />} />
 
         <Route path="/registradores" element={<Registradores />} />
-        <Route path="/registradores/novo" element={<NovoRegistrador />} />
-        <Route path="/registradores/:id/editar" element={<NovoRegistrador />} />
+        <Route path="/registradores/novo" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><NovoRegistrador /></ProtectedRoute>} />
+        <Route path="/registradores/:id/editar" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><NovoRegistrador /></ProtectedRoute>} />
 
         <Route path="/itens" element={<Itens />} />
         <Route path="/itens/novo" element={<NovoItem />} />
