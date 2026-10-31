@@ -7,6 +7,7 @@ const base = [
   { to: '/categorias', label: 'Categorias' },
   { to: '/itens', label: 'Itens' },
   { to: '/relatos', label: 'Relatos' },
+  { to: '/reivindicacoes', label: 'Reivindicações' },
   { to: '/consulta', label: 'Consulta' },
   { to: '/casos', label: 'Casos' },
 ];

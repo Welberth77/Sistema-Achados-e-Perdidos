@@ -5,6 +5,7 @@ import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
+import ReivindicarItem from '../../components/ReivindicarItem.jsx';
 import { SETOR_NOME, SETOR_LOCAL } from '../../config/setor.js';
 
 function dataCurta(iso) {
@@ -118,6 +119,9 @@ export default function MeusRelatos() {
             <LinhaDetalhe rotulo="Local" valor={detalhe.local_encontrado} />
             <LinhaDetalhe rotulo="Encontrado em" valor={dataCurta(detalhe.data_encontrado)} />
             <LinhaDetalhe rotulo="Retirada" valor={`${SETOR_NOME} — ${SETOR_LOCAL}`} />
+            {detalhe.status !== 'DEVOLVIDO' && detalhe.status !== 'DESCARTADO' && (
+              <ReivindicarItem item={detalhe} relatos={relatos} />
+            )}
             <p className="mt-4 text-xs text-muted">
               Reconheceu o item? Procure o setor responsável levando um documento de identificação para retirá-lo.
             </p>

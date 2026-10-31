@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listarAchados } from '../../services/achados.js';
+import { meusRelatos } from '../../services/meusRelatos.js';
 import { CATEGORIAS_PUBLICAS } from '../../services/publico.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
+import ReivindicarItem from '../../components/ReivindicarItem.jsx';
 import FiltroStatus from '../../components/FiltroStatus.jsx';
 import LegendaStatus from '../../components/LegendaStatus.jsx';
 import { SETOR_NOME, SETOR_LOCAL } from '../../config/setor.js';
@@ -60,7 +62,8 @@ export default function Inicio() {
   const [categoria, setCategoria] = useState('');
   const [statusSel, setStatusSel] = useState([]); // múltipla seleção de situações
   const [pagina, setPagina] = useState(1);
-  const [detalhe, setDetalhe] = useState(null); // item selecionado para o modal
+  const [detalhe, setDetalhe] = useState(null);
+  const [relatosAluno, setRelatosAluno] = useState([]); // item selecionado para o modal
   const [vista, setVista] = useState(() => {
     try {
       return localStorage.getItem('achados_vista') === 'lista' ? 'lista' : 'cards';
@@ -93,6 +96,7 @@ export default function Inicio() {
 
   useEffect(() => {
     carregar();
+    meusRelatos().then((r) => setRelatosAluno(Array.isArray(r) ? r : [])).catch(() => setRelatosAluno([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -200,20 +204,21 @@ export default function Inicio() {
       ) : vista === 'cards' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visiveis.map((it) => (
-            <article key={it.id} className="flex flex-col rounded-lg border border-border bg-surface p-4">
+            <article
+              key={it.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setDetalhe(it)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetalhe(it); } }}
+              className="flex cursor-pointer flex-col rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
                   {it.categoria?.nome || 'Sem categoria'}
                 </span>
                 <StatusBadge status={it.status} />
               </div>
-              <button
-                type="button"
-                className="text-left font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
-                onClick={() => setDetalhe(it)}
-              >
-                {it.titulo}
-              </button>
+              <p className="font-medium text-fg">{it.titulo}</p>
               <dl className="mt-2 space-y-1 text-sm">
                 <div className="flex gap-2">
                   <dt className="w-24 shrink-0 text-muted">Local</dt>
@@ -230,17 +235,18 @@ export default function Inicio() {
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
           {visiveis.map((it) => (
-            <li key={it.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
+            <li
+              key={it.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setDetalhe(it)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetalhe(it); } }}
+              className="flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition-colors hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            >
               <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
                 {it.categoria?.nome || 'Sem categoria'}
               </span>
-              <button
-                type="button"
-                className="font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
-                onClick={() => setDetalhe(it)}
-              >
-                {it.titulo}
-              </button>
+              <span className="font-medium text-fg">{it.titulo}</span>
               <span className="text-sm text-muted">{it.local_encontrado || '—'}</span>
               <span className="text-sm tabular-nums text-muted">{dataCurta(it.data_encontrado)}</span>
               <span className="ml-auto">
@@ -289,6 +295,9 @@ export default function Inicio() {
             <LinhaDetalhe rotulo="Local" valor={detalhe.local_encontrado} />
             <LinhaDetalhe rotulo="Encontrado em" valor={dataCurta(detalhe.data_encontrado)} />
             <LinhaDetalhe rotulo="Retirada" valor={`${SETOR_NOME} — ${SETOR_LOCAL}`} />
+            {detalhe.status !== 'DEVOLVIDO' && detalhe.status !== 'DESCARTADO' && (
+              <ReivindicarItem item={detalhe} relatos={relatosAluno} />
+            )}
             <p className="mt-4 text-xs text-muted">
               Para retirar, procure o setor responsável levando um documento de identificação.
             </p>

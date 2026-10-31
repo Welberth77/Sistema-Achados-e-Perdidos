@@ -23,6 +23,7 @@ import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
 import EditarRelato from '../pages/relatos/EditarRelato.jsx';
 import Categorias from '../pages/categorias/Categorias.jsx';
 import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
+import Reivindicacoes from '../pages/reivindicacoes/Reivindicacoes.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
@@ -79,6 +80,8 @@ export default function AppRoutes() {
         <Route path="/relatos" element={<Relatos />} />
         <Route path="/relatos/:id" element={<DetalhesRelato />} />
         <Route path="/relatos/:id/editar" element={<EditarRelato />} />
+
+        <Route path="/reivindicacoes" element={<Reivindicacoes />} />
 
         <Route path="/consulta" element={<Consulta />} />
 
