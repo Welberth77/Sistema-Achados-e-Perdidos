@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { obterCaso, encerrarCaso } from '../../services/casos.js';
+import { obterCaso, encerrarCaso, cancelarCaso } from '../../services/casos.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Button from '../../components/Button.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
@@ -37,6 +37,9 @@ export default function DetalhesCaso() {
   const [erro, setErro] = useState('');
   const [confirmando, setConfirmando] = useState(false);
   const [encerrando, setEncerrando] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [confirmandoCancel, setConfirmandoCancel] = useState(false);
+  const [motivoCancel, setMotivoCancel] = useState('');
   const [erroAcao, setErroAcao] = useState('');
 
   function carregar() {
@@ -64,6 +67,22 @@ export default function DetalhesCaso() {
       setConfirmando(false);
     } finally {
       setEncerrando(false);
+    }
+  }
+
+  async function confirmarCancelamento() {
+    setErroAcao('');
+    setCancelando(true);
+    try {
+      await cancelarCaso(id, motivoCancel.trim() || undefined);
+      setConfirmandoCancel(false);
+      setMotivoCancel('');
+      carregar();
+    } catch (e) {
+      setErroAcao(e.response?.data?.error || 'Não foi possível cancelar o caso.');
+      setConfirmandoCancel(false);
+    } finally {
+      setCancelando(false);
     }
   }
 
@@ -125,6 +144,9 @@ export default function DetalhesCaso() {
         {encerravel && (
           <Button onClick={() => setConfirmando(true)} disabled={!itemFinalizado}>Encerrar caso</Button>
         )}
+        {encerravel && (
+          <Button variant="danger" onClick={() => setConfirmandoCancel(true)}>Cancelar caso</Button>
+        )}
       </div>
 
       <ConfirmDialog
@@ -136,6 +158,28 @@ export default function DetalhesCaso() {
         confirmLabel="Encerrar"
         mensagem={`Encerrar o caso ${caso.codigo}? Ele será marcado como concluído.`}
       />
+
+      <ConfirmDialog
+        open={confirmandoCancel}
+        onClose={() => { setConfirmandoCancel(false); setMotivoCancel(''); }}
+        onConfirm={confirmarCancelamento}
+        loading={cancelando}
+        title="Cancelar caso"
+        confirmLabel="Cancelar caso"
+        mensagem={`Cancelar o caso ${caso.codigo}? Use isto para casos abertos por engano — o item volta a ficar livre para um novo caso.`}
+      >
+        <label className="mt-3 block text-sm">
+          <span className="mb-1 block font-medium text-fg">Motivo (opcional)</span>
+          <textarea
+            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-border-strong focus:outline-none"
+            rows={2}
+            maxLength={300}
+            value={motivoCancel}
+            onChange={(e) => setMotivoCancel(e.target.value)}
+            placeholder="Ex.: caso aberto por engano."
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }

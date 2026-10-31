@@ -1,5 +1,5 @@
 import express from 'express';
-import { listarCasos, obterCaso, criarCaso, encerrarCaso } from '../controllers/casosController.js';
+import { listarCasos, obterCaso, criarCaso, encerrarCaso, cancelarCaso } from '../controllers/casosController.js';
 import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -19,5 +19,8 @@ router.get('/:id', autenticarToken, staff, obterCaso);
 
 // PATCH /api/casos/:id/encerrar - Encerrar um caso
 router.patch('/:id/encerrar', autenticarToken, staff, encerrarCaso);
+
+// PATCH /api/casos/:id/cancelar - Cancelar um caso (aberto por engano)
+router.patch('/:id/cancelar', autenticarToken, staff, cancelarCaso);
 
 export default router;

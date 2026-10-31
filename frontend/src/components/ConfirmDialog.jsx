@@ -10,6 +10,7 @@ export default function ConfirmDialog({
   mensagem,
   confirmLabel = 'Excluir',
   loading = false,
+  children,
 }) {
   return (
     <Modal
@@ -29,6 +30,7 @@ export default function ConfirmDialog({
       }
     >
       <p className="text-sm text-muted">{mensagem}</p>
+      {children}
     </Modal>
   );
 }

@@ -167,3 +167,51 @@ export async function encerrarCaso(req, res) {
     return res.status(500).json({ error: 'Erro interno ao encerrar caso.' });
   }
 }
+
+// PATCH /api/casos/:id/cancelar — cancela um caso aberto por engano (NÃO exige item devolvido).
+export async function cancelarCaso(req, res) {
+  const { id } = req.params;
+  const motivo = ((req.body && req.body.motivo) || '').trim();
+  try {
+    const atual = await pool.query(
+      `SELECT c.status AS caso_status, i.id AS item_id, i.status AS item_status
+         FROM casos c
+         JOIN itens_achados i ON i.id = c.item_achado_id
+        WHERE c.id = $1`,
+      [id]
+    );
+    if (atual.rowCount === 0) {
+      return res.status(404).json({ error: 'Caso não encontrado.' });
+    }
+    const { caso_status, item_id, item_status } = atual.rows[0];
+    if (caso_status === 'ENCERRADO' || caso_status === 'CANCELADO') {
+      return res.status(409).json({ error: 'Este caso já está encerrado ou cancelado.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `UPDATE casos
+            SET status = 'CANCELADO', data_encerramento = now(),
+                descricao = CASE WHEN $2 <> '' THEN COALESCE(descricao || E'\n', '') || '[Cancelado] ' || $2 ELSE descricao END
+          WHERE id = $1 RETURNING *`,
+        [id, motivo]
+      );
+      // Se o item estava em análise por causa deste caso, devolve para custódia (fica disponível de novo).
+      if (item_status === 'EM_ANALISE') {
+        await client.query(`UPDATE itens_achados SET status = 'EM_CUSTODIA' WHERE id = $1`, [item_id]);
+      }
+      await client.query('COMMIT');
+      return res.json({ mensagem: 'Caso cancelado.', caso: result.rows[0] });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('Erro ao cancelar caso:', err);
+    return res.status(500).json({ error: 'Erro interno ao cancelar caso.' });
+  }
+}
