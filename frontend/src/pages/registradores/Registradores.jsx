@@ -108,6 +108,7 @@ export default function Registradores() {
             label="Pesquisar"
             placeholder="Nome, documento ou matrícula…"
             value={q}
+            maxLength={120}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && carregar()}
           />

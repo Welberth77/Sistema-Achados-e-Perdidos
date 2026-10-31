@@ -107,6 +107,7 @@ export default function Relatos() {
               label="Pesquisar"
               placeholder="Título ou descrição…"
               value={q}
+            maxLength={120}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && carregar()}
             />
