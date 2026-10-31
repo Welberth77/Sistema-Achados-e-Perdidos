@@ -196,11 +196,15 @@ export default function DetalhesItem() {
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => navigate('/itens')}>Voltar</Button>
+        {item.caso_ativo ? (
+          <Button variant="outline" onClick={() => navigate(`/casos/${item.caso_ativo.id}`)}>
+            Ver caso ({item.caso_ativo.codigo})
+          </Button>
+        ) : (
+          ativo && <Button variant="outline" onClick={abrirModalCaso}>Abrir caso</Button>
+        )}
         {ativo && (
-          <>
-            <Button variant="outline" onClick={abrirModalCaso}>Abrir caso</Button>
-            <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
-          </>
+          <Button onClick={() => navigate(`/itens/${id}/devolver`)}>Devolver item</Button>
         )}
       </div>
 

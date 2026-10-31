@@ -74,6 +74,15 @@ export async function criarCaso(req, res) {
       return res.status(404).json({ error: 'Item não encontrado.' });
     }
 
+    // impede abrir um segundo caso enquanto já houver um em andamento para o item
+    const casoAtivo = await pool.query(
+      `SELECT codigo FROM casos WHERE item_achado_id = $1 AND status NOT IN ('DEVOLVIDO','ENCERRADO','CANCELADO') LIMIT 1`,
+      [item_achado_id]
+    );
+    if (casoAtivo.rowCount) {
+      return res.status(409).json({ error: `Este item já possui um caso em andamento (${casoAtivo.rows[0].codigo}).` });
+    }
+
     for (let tentativa = 0; tentativa < 5; tentativa++) {
       const { rows: cnt } = await pool.query(
         `SELECT COUNT(*)::int AS n FROM casos WHERE codigo LIKE $1`,

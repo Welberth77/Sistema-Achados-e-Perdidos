@@ -96,10 +96,17 @@ export async function aprovarReivindicacao(req, res) {
     const s = sres.rows[0];
     if (s.status !== 'PENDENTE') { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Solicitação já foi decidida.' }); }
 
-    // cria o caso (item + relato), com código único
+    // se o item já tem caso em andamento, reaproveita (não duplica)
+    const jaExiste = await client.query(
+      `SELECT id FROM casos WHERE item_achado_id = $1 AND status NOT IN ('DEVOLVIDO','ENCERRADO','CANCELADO')
+       ORDER BY data_abertura DESC, id DESC LIMIT 1`,
+      [s.item_achado_id]
+    );
+    let casoId = jaExiste.rows.length ? jaExiste.rows[0].id : null;
+
+    // senão, cria o caso (item + relato), com código único
     const ano = new Date().getFullYear();
-    let casoId = null;
-    for (let t = 0; t < 5; t++) {
+    for (let t = 0; !casoId && t < 5; t++) {
       const { rows: cnt } = await client.query(`SELECT COUNT(*)::int AS n FROM casos WHERE codigo LIKE $1`, [`CASO-${ano}-%`]);
       const codigo = `CASO-${ano}-${String(cnt[0].n + 1 + t).padStart(4, '0')}`;
       try {

@@ -96,6 +96,14 @@ export async function obterItem(req, res) {
       usuario: c.usuario_nome,
       data_evento: c.data_evento,
     }));
+    // caso ainda em andamento ligado a este item (p/ não abrir caso duplicado)
+    const { rows: ca } = await pool.query(
+      `SELECT id, codigo, status FROM casos
+       WHERE item_achado_id = $1 AND status NOT IN ('DEVOLVIDO','ENCERRADO','CANCELADO')
+       ORDER BY data_abertura DESC, id DESC LIMIT 1`,
+      [req.params.id]
+    );
+    item.caso_ativo = ca.length ? { id: ca[0].id, codigo: ca[0].codigo, status: ca[0].status } : null;
     return res.json(item);
   } catch (err) {
     console.error('Erro ao obter item:', err);
