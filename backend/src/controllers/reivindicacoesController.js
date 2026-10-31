@@ -32,17 +32,22 @@ export async function criarReivindicacao(req, res) {
 export async function minhasReivindicacoes(req, res) {
   try {
     const { rows } = await pool.query(
-      `SELECT r.id, r.status, r.mensagem, r.criado_em,
-              i.id AS item_id, i.codigo AS item_codigo, i.titulo AS item_titulo
+      `SELECT r.id, r.status, r.mensagem, r.criado_em, r.decidido_em,
+              i.id AS item_id, i.codigo AS item_codigo, i.titulo AS item_titulo,
+              i.local_encontrado AS item_local,
+              c.codigo AS caso_codigo
        FROM reivindicacoes r
        JOIN itens_achados i ON i.id = r.item_achado_id
+       LEFT JOIN casos c ON c.id = r.caso_id
        WHERE r.usuario_id = $1
        ORDER BY r.criado_em DESC`,
       [req.usuario.id]
     );
     return res.json(rows.map((r) => ({
-      id: r.id, status: r.status, mensagem: r.mensagem, criado_em: r.criado_em,
-      item: { id: r.item_id, codigo: r.item_codigo, titulo: r.item_titulo },
+      id: r.id, status: r.status, mensagem: r.mensagem,
+      criado_em: r.criado_em, decidido_em: r.decidido_em,
+      caso_codigo: r.caso_codigo,
+      item: { id: r.item_id, codigo: r.item_codigo, titulo: r.item_titulo, local_encontrado: r.item_local },
     })));
   } catch (err) {
     console.error('Erro ao listar minhas reivindicações:', err);
@@ -114,6 +119,12 @@ export async function aprovarReivindicacao(req, res) {
     await client.query(
       `UPDATE reivindicacoes SET status='APROVADA', caso_id=$1, decidido_por=$2, decidido_em=now() WHERE id=$3`,
       [casoId, staffId, id]
+    );
+    // o item entra em análise ao abrir o caso (não mexe em itens já devolvidos/descartados)
+    await client.query(
+      `UPDATE itens_achados SET status='EM_ANALISE'
+       WHERE id=$1 AND status NOT IN ('DEVOLVIDO','DESCARTADO')`,
+      [s.item_achado_id]
     );
     await client.query('COMMIT');
     return res.json({ mensagem: 'Reivindicação aprovada e caso aberto.', caso_id: casoId });
