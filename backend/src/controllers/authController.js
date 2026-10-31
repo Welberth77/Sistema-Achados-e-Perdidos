@@ -29,7 +29,8 @@ export async function login(req, res) {
     return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
   }
   try {
-    const resultado = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    const emailNorm = String(email).trim().toLowerCase();
+    const resultado = await pool.query('SELECT * FROM usuarios WHERE LOWER(email) = $1', [emailNorm]);
     const usuario = resultado.rows[0];
     if (!usuario) return res.status(401).json({ error: 'Credenciais inválidas.' });
     const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
@@ -62,6 +63,7 @@ export async function registrar(req, res) {
     return res.status(400).json({ error: 'A senha deve ter ao menos 6 caracteres.' });
   }
 
+  const emailNorm = String(email).trim().toLowerCase();
   const querRegistrador = tipoConta === 'REGISTRADOR';
   const reg = registrador || {};
   if (querRegistrador && !reg.vinculo) {
@@ -72,7 +74,7 @@ export async function registrar(req, res) {
   try {
     await client.query('BEGIN');
 
-    const existe = await client.query('SELECT 1 FROM usuarios WHERE email = $1', [email]);
+    const existe = await client.query('SELECT 1 FROM usuarios WHERE LOWER(email) = $1', [emailNorm]);
     if (existe.rowCount > 0) {
       await client.query('ROLLBACK');
       return res.status(409).json({ error: 'Já existe uma conta com este e-mail.' });
@@ -83,7 +85,7 @@ export async function registrar(req, res) {
       `INSERT INTO usuarios (nome, email, senha_hash, papel)
        VALUES ($1, $2, $3, 'USUARIO')
        RETURNING id, nome, email, papel`,
-      [nome, email, senha_hash]
+      [String(nome).trim(), emailNorm, senha_hash]
     );
     const usuario = result.rows[0];
 
