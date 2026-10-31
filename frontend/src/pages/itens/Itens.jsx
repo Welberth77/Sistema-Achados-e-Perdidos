@@ -8,6 +8,7 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 import { dataBR } from '../../utils/formato.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import FiltroStatus from '../../components/FiltroStatus.jsx';
+import LegendaStatus from '../../components/LegendaStatus.jsx';
 
 const STATUS = [
   { value: 'RECEBIDO', label: 'Recebido' },
@@ -119,6 +120,9 @@ export default function Itens() {
 
         <div className="mt-3">
           <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={() => setStatusSel([])} />
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <LegendaStatus />
         </div>
       </div>
 

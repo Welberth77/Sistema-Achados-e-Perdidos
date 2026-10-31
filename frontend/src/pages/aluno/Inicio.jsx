@@ -7,6 +7,7 @@ import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
 import FiltroStatus from '../../components/FiltroStatus.jsx';
+import LegendaStatus from '../../components/LegendaStatus.jsx';
 import { SETOR_NOME, SETOR_LOCAL } from '../../config/setor.js';
 
 const POR_PAGINA = 12;
@@ -163,6 +164,9 @@ export default function Inicio() {
 
         <div className="mt-4">
           <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={limparStatus} />
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <LegendaStatus statuses={['RECEBIDO', 'EM_CUSTODIA', 'EM_ANALISE', 'EM_DEVOLUCAO']} />
         </div>
       </div>
 
