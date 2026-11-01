@@ -91,6 +91,17 @@ export async function registrarDevolucao(req, res) {
       [item_id]
     );
 
+    // 4. Encerra os relatos de perda ligados a esses casos (reflete na área do aluno).
+    await client.query(
+      `UPDATE relatos_perda SET status = 'ENCERRADO', atualizado_em = NOW()
+        WHERE id IN (
+          SELECT relato_perda_id FROM casos
+           WHERE item_achado_id = $1 AND relato_perda_id IS NOT NULL
+        )
+          AND status NOT IN ('ENCERRADO','CANCELADO')`,
+      [item_id]
+    );
+
     await client.query('COMMIT');
     return res.status(200).json({
       mensagem: 'Item devolvido com sucesso.',
