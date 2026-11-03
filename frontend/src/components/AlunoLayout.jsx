@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import { minhasReivindicacoes } from '../services/reivindicacoes.js';
 import LogoutButton from './LogoutButton.jsx';
+import AcessibilidadeControles from './AcessibilidadeControles.jsx';
 
 function IconeSol() {
   return (
@@ -56,22 +57,22 @@ export default function AlunoLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <header className="sticky top-0 z-10 border-b border-black/10 bg-primary text-primary-fg dark:border-white/10">
-        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <button
             onClick={() => navigate('/inicio')}
             className="flex items-center gap-2 rounded-md text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
             <span className="grid h-7 w-7 place-items-center rounded-md bg-white/15 text-xs font-bold text-white">AP</span>
-            <span className="text-sm font-semibold">Achados &amp; Perdidos</span>
+            <span className="hidden text-sm font-semibold sm:inline">Achados &amp; Perdidos</span>
           </button>
 
-          <nav aria-label="Navegação" className="hidden gap-1 sm:flex">
+          <nav aria-label="Navegação" className="hidden gap-1 lg:flex">
             {links.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
+                  `whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
                     isActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`
                 }
@@ -83,6 +84,8 @@ export default function AlunoLayout() {
           </nav>
 
           <div className="flex items-center gap-1">
+            <AcessibilidadeControles />
+            <div className="mx-1 hidden h-6 w-px bg-white/20 sm:block" aria-hidden="true" />
             <button
               onClick={alternar}
               aria-label={escuro ? 'Ativar tema claro' : 'Ativar tema escuro'}
@@ -91,12 +94,12 @@ export default function AlunoLayout() {
             >
               {escuro ? <IconeSol /> : <IconeLua />}
             </button>
-            <span className="mx-1 hidden text-sm font-medium text-white sm:inline">{usuario?.nome || 'Usuário'}</span>
+            <span className="mx-1 hidden text-sm font-medium text-white xl:inline">{usuario?.nome || 'Usuário'}</span>
             <LogoutButton />
           </div>
         </div>
         {/* nav em telas pequenas */}
-        <nav aria-label="Navegação" className="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 sm:hidden">
+        <nav aria-label="Navegação" className="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 lg:hidden">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -112,7 +115,7 @@ export default function AlunoLayout() {
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         <Outlet />
       </main>
     </div>
