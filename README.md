@@ -31,12 +31,30 @@ dados iniciais automaticamente — não é preciso instalar PostgreSQL nem rodar
 
 Teste: `GET http://localhost:3000/api/health` deve responder `{ "status": "ok" }`.
 
-Comandos úteis:
+Comandos úteis (Docker):
 ```bash
-docker compose down         # para os contêineres (mantém os dados do banco)
-docker compose down -v      # para e APAGA o banco (reaplica schema/seed na próxima subida)
-docker compose build        # reconstrói a imagem do backend após mudar dependências
+docker compose up -d --build backend   # rebuilda e sobe o backend após mudar o código dele
+docker compose ps                      # status dos contêineres
+docker compose logs -f backend         # acompanha os logs do backend
+docker compose restart backend         # reinicia só o backend
+docker compose down                    # para os contêineres (mantém os dados do banco)
+docker compose down -v                 # para e APAGA o banco (reaplica schema/seed na próxima subida)
 ```
+
+Banco (psql e migrações):
+```bash
+# abrir um psql no banco
+docker compose exec db psql -U app_achados -d achados_perdidos
+
+# aplicar uma migração de db/migrations/ (copia p/ dentro do container — preserva o encoding)
+docker cp db/migrations/004_fix_vinculo_servidor.sql achados_db:/tmp/m.sql
+docker compose exec db psql -U app_achados -d achados_perdidos -f /tmp/m.sql
+
+# listar usuários e papéis
+docker compose exec db psql -U app_achados -d achados_perdidos -c "SELECT nome, email, papel FROM usuarios ORDER BY papel;"
+```
+
+> ⚠️ No PowerShell, **não** use `Get-Content arquivo.sql | docker ... psql` — isso corrompe acentos (UTF-8). Use sempre `docker cp` + `psql -f`, como acima.
 
 ### 2. Frontend (local)
 
@@ -51,6 +69,7 @@ npm run dev                  # sobe em http://localhost:5173
 
 - **Banco:** `achados_perdidos` · usuário `app_achados` · senha `1234` · `localhost:5432`
 - **Login (admin):** e-mail `admin@achados.local` · senha `admin123`
+- **Login (aluno / usuário comum):** e-mail `aluno@achados.local` · senha `aluno123`
 
 > Senhas são padrão de **desenvolvimento** — troque em produção.
 

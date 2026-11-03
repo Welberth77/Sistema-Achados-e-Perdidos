@@ -1,11 +1,18 @@
 import express from 'express';
-import { listarRegistradores, criarRegistrador } from '../controllers/registradoresController.js';
+import {
+  listarRegistradores, obterRegistrador, criarRegistrador, atualizarRegistrador, excluirRegistrador,
+} from '../controllers/registradoresController.js';
 import { autenticarToken, exigePapel } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 const staff = exigePapel('ADMINISTRADOR', 'SERVIDOR');
+const admin = exigePapel('ADMINISTRADOR');
 
+// Ver a lista: equipe (admin/servidor). Gerenciar: só ADMINISTRADOR.
 router.get('/', autenticarToken, staff, listarRegistradores);
-router.post('/', autenticarToken, staff, criarRegistrador);
+router.get('/:id', autenticarToken, staff, obterRegistrador);
+router.post('/', autenticarToken, admin, criarRegistrador);
+router.put('/:id', autenticarToken, admin, atualizarRegistrador);
+router.delete('/:id', autenticarToken, admin, excluirRegistrador);
 
 export default router;

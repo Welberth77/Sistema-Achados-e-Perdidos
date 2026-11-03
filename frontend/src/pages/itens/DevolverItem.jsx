@@ -1,34 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { obterItem } from '../../services/itens.js';
-import { listarRegistradores } from '../../services/registradores.js';
+import { listarAlunos } from '../../services/usuarios.js';
 import { registrarDevolucao } from '../../services/devolucoes.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
-import { noMax, LIM } from '../../utils/validacao.js';
+import { noMax, LIM, cpfValido, formatarCpf } from '../../utils/validacao.js';
 
 export default function DevolverItem() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [item, setItem] = useState(null);
-  const [registradores, setRegistradores] = useState([]);
+  const [alunos, setAlunos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erroCarga, setErroCarga] = useState('');
 
-  const [form, setForm] = useState({ recebedor_id: '', comprovante: '', observacao: '' });
+  const [form, setForm] = useState({
+    recebedor_usuario_id: '',
+    recebedor_nome: '',
+    semConta: false,
+    tipoDocId: 'CPF',
+    docIdentidade: '',
+    comprovante: '',
+    observacao: '',
+  });
   const [erros, setErros] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [erroGeral, setErroGeral] = useState('');
 
   useEffect(() => {
     setCarregando(true);
-    Promise.all([obterItem(id), listarRegistradores()])
-      .then(([itemData, regs]) => {
+    Promise.all([obterItem(id), listarAlunos().catch(() => [])])
+      .then(([itemData, lista]) => {
         setItem(itemData);
-        setRegistradores(Array.isArray(regs) ? regs : []);
+        setAlunos(Array.isArray(lista) ? lista : []);
       })
       .catch(() => setErroCarga('Não foi possível carregar o item.'))
       .finally(() => setCarregando(false));
@@ -38,12 +46,20 @@ export default function DevolverItem() {
 
   function validar() {
     const e = {};
-    if (!form.recebedor_id) e.recebedor_id = 'Selecione quem está recebendo o item.';
+    if (form.semConta) {
+      if (!form.recebedor_nome.trim()) e.recebedor_nome = 'Informe o nome de quem está recebendo.';
+      else if (!noMax(form.recebedor_nome, LIM.nome)) e.recebedor_nome = `Máximo de ${LIM.nome} caracteres.`;
+    } else if (!form.recebedor_usuario_id) {
+      e.recebedor_usuario_id = 'Selecione o dono que está recebendo.';
+    }
+
+    if (!form.docIdentidade.trim()) e.docIdentidade = 'Informe o documento de identidade.';
+    else if (form.tipoDocId === 'CPF' && !cpfValido(form.docIdentidade)) e.docIdentidade = 'CPF inválido.';
+    else if (!noMax(form.docIdentidade, LIM.documento)) e.docIdentidade = `Máximo de ${LIM.documento} caracteres.`;
+
     if (!form.comprovante.trim()) e.comprovante = 'A comprovação de propriedade é obrigatória.';
-    else if (!noMax(form.comprovante, LIM.observacoes))
-      e.comprovante = `Máximo de ${LIM.observacoes} caracteres.`;
-    if (!noMax(form.observacao, LIM.observacoes))
-      e.observacao = `Máximo de ${LIM.observacoes} caracteres.`;
+    else if (!noMax(form.comprovante, LIM.observacoes)) e.comprovante = `Máximo de ${LIM.observacoes} caracteres.`;
+    if (!noMax(form.observacao, LIM.observacoes)) e.observacao = `Máximo de ${LIM.observacoes} caracteres.`;
     setErros(e);
     return Object.keys(e).length === 0;
   }
@@ -53,16 +69,18 @@ export default function DevolverItem() {
     if (!validar()) return;
     setEnviando(true);
     try {
+      const idLabel = form.tipoDocId === 'CPF' ? 'CPF' : 'Documento';
+      const comprovanteFinal = `Identidade (${idLabel}): ${form.docIdentidade.trim()} — Propriedade: ${form.comprovante.trim()}`;
       await registrarDevolucao({
         item_id: id,
-        recebedor_id: form.recebedor_id,
-        comprovante: form.comprovante.trim(),
+        recebedor_usuario_id: form.semConta ? undefined : form.recebedor_usuario_id,
+        recebedor_nome: form.semConta ? form.recebedor_nome : undefined,
+        comprovante: comprovanteFinal,
         observacao: form.observacao.trim(),
       });
       navigate(`/itens/${id}`);
     } catch (err) {
-      const msg = err.response?.data?.error;
-      setErroGeral(msg || 'Não foi possível registrar a devolução. Tente novamente.');
+      setErroGeral(err.response?.data?.error || 'Não foi possível registrar a devolução. Tente novamente.');
     } finally {
       setEnviando(false);
     }
@@ -78,7 +96,6 @@ export default function DevolverItem() {
       </div>
     );
 
-  // Item já devolvido (ou descartado): não permite nova devolução.
   const indisponivel = item.status === 'DEVOLVIDO' || item.status === 'DESCARTADO';
 
   return (
@@ -86,11 +103,10 @@ export default function DevolverItem() {
       <div className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-fg">Devolver item</h1>
         <p className="mt-1 text-sm text-muted">
-          Registre a entrega do item ao proprietário. É obrigatório comprovar a propriedade.
+          Registre a entrega do item ao <strong className="text-fg">dono</strong>. É obrigatório identificar quem recebe e comprovar a propriedade.
         </p>
       </div>
 
-      {/* Resumo do item */}
       <section className="mb-5 rounded-lg border border-border bg-surface p-5">
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-fg">{item.titulo}</h2>
@@ -115,39 +131,85 @@ export default function DevolverItem() {
       ) : (
         <>
           {erroGeral && (
-            <div
-              role="alert"
-              className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300"
-            >
+            <div role="alert" className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
               {erroGeral}
             </div>
           )}
 
           <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
             <div className="grid grid-cols-1 gap-4">
-              <Select
-                label="Recebedor"
-                required
-                className="w-full"
-                error={erros.recebedor_id}
-                value={form.recebedor_id}
-                onChange={(e) => set('recebedor_id', e.target.value)}
-              >
-                <option value="">Selecione quem está recebendo…</option>
-                {registradores.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.nome}
-                    {r.documento ? ` — ${r.documento}` : r.matricula ? ` — ${r.matricula}` : ''}
-                  </option>
-                ))}
-              </Select>
+              {form.semConta ? (
+                <Input
+                  label="Nome de quem está recebendo"
+                  required
+                  value={form.recebedor_nome}
+                  error={erros.recebedor_nome}
+                  maxLength={LIM.nome}
+                  onChange={(e) => set('recebedor_nome', e.target.value)}
+                />
+              ) : (
+                <Select
+                  label="Dono (quem está recebendo)"
+                  required
+                  className="w-full"
+                  error={erros.recebedor_usuario_id}
+                  value={form.recebedor_usuario_id}
+                  onChange={(e) => set('recebedor_usuario_id', e.target.value)}
+                >
+                  <option value="">Selecione o dono…</option>
+                  {alunos.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nome}
+                      {a.email ? ` — ${a.email}` : ''}
+                    </option>
+                  ))}
+                </Select>
+              )}
+
+              <label className="flex items-center gap-2 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  checked={form.semConta}
+                  onChange={(e) => set('semConta', e.target.checked)}
+                  className="h-4 w-4 rounded border-border-strong text-primary focus:ring-primary"
+                />
+                A pessoa não tem conta no sistema (informar o nome)
+              </label>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Select
+                  label="Documento de identidade"
+                  className="w-full"
+                  value={form.tipoDocId}
+                  onChange={(e) =>
+                    setForm((f) => {
+                      const tipo = e.target.value;
+                      return { ...f, tipoDocId: tipo, docIdentidade: tipo === 'CPF' ? formatarCpf(f.docIdentidade) : f.docIdentidade };
+                    })
+                  }
+                  options={[
+                    { value: 'CPF', label: 'CPF' },
+                    { value: 'OUTRO', label: 'Outro documento' },
+                  ]}
+                />
+                <Input
+                  label={form.tipoDocId === 'CPF' ? 'Número do CPF' : 'Número do documento'}
+                  required
+                  value={form.docIdentidade}
+                  error={erros.docIdentidade}
+                  maxLength={LIM.documento}
+                  inputMode={form.tipoDocId === 'CPF' ? 'numeric' : 'text'}
+                  placeholder={form.tipoDocId === 'CPF' ? '000.000.000-00' : 'RG, CNH, passaporte…'}
+                  onChange={(e) => set('docIdentidade', form.tipoDocId === 'CPF' ? formatarCpf(e.target.value) : e.target.value)}
+                />
+              </div>
 
               <Input
                 label="Comprovação de propriedade"
                 required
                 value={form.comprovante}
                 error={erros.comprovante}
-                hint="Descreva a prova apresentada (documento, nota fiscal, característica exclusiva do item…)."
+                hint="Prova de que o item é dele (nota fiscal, característica exclusiva, foto…)."
                 maxLength={LIM.observacoes}
                 onChange={(e) => set('comprovante', e.target.value)}
               />

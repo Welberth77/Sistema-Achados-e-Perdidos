@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listarItens } from '../../services/itens.js';
+import { listarItens, excluirItem } from '../../services/itens.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Input from '../../components/Input.jsx';
-import Select from '../../components/Select.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { dataBR } from '../../utils/formato.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
+import LegendaStatus from '../../components/LegendaStatus.jsx';
 
-// valores iguais ao enum itens_achados.status do banco
 const STATUS = [
-  { value: '', label: 'Todos os status' },
   { value: 'RECEBIDO', label: 'Recebido' },
   { value: 'EM_CUSTODIA', label: 'Em custódia' },
   { value: 'EM_ANALISE', label: 'Em análise' },
@@ -23,12 +24,15 @@ export default function Itens() {
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusSel, setStatusSel] = useState([]);
+  const [erroAcao, setErroAcao] = useState('');
+  const [paraExcluir, setParaExcluir] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   async function carregar() {
     setLoading(true);
     try {
-      setDados(await listarItens({ q, status }));
+      setDados(await listarItens({ q }));
     } finally {
       setLoading(false);
     }
@@ -39,13 +43,48 @@ export default function Itens() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+  }
+
+  const visiveis = useMemo(
+    () => (statusSel.length ? dados.filter((d) => statusSel.includes(d.status)) : dados),
+    [dados, statusSel]
+  );
+
+  async function confirmarExclusao() {
+    if (!paraExcluir) return;
+    setErroAcao('');
+    setExcluindo(true);
+    try {
+      await excluirItem(paraExcluir.id);
+      setParaExcluir(null);
+      carregar();
+    } catch (e) {
+      setErroAcao(e.response?.data?.error || 'Não foi possível excluir o item.');
+      setParaExcluir(null);
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   const colunas = [
     { key: 'codigo', header: 'Código', className: 'font-medium tabular-nums' },
     { key: 'titulo', header: 'Título' },
-    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—' },
+    { key: 'categoria', header: 'Categoria', render: (row) => row.categoria?.nome || '—', sortValue: (row) => row.categoria?.nome || '' },
     { key: 'local_encontrado', header: 'Local' },
-    { key: 'data_encontrado', header: 'Data', className: 'tabular-nums text-muted' },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'data_encontrado', header: 'Data', render: (row) => dataBR(row.data_encontrado), className: 'tabular-nums text-muted' },
+    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} />, sortValue: (row) => row.status },
+    {
+      key: 'acoes',
+      header: 'Ações',
+      render: (row) => (
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/itens/${row.id}/editar`)}>Editar</Button>
+          <Button size="sm" variant="danger" onClick={() => setParaExcluir(row)}>Excluir</Button>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -58,33 +97,50 @@ export default function Itens() {
         <Button onClick={() => navigate('/itens/novo')}>Novo item</Button>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="min-w-56 flex-1">
-          <Input
-            label="Pesquisar"
-            placeholder="Título ou descrição…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && carregar()}
-          />
+      {erroAcao && (
+        <div role="alert" className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
+          {erroAcao}
         </div>
-        <Select
-          label="Status"
-          options={STATUS}
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        />
-        <Button variant="outline" onClick={carregar}>
-          Buscar
-        </Button>
+      )}
+
+      <div className="mb-4 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1">
+            <Input
+              label="Pesquisar"
+              placeholder="Título ou descrição…"
+              value={q}
+            maxLength={120}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregar()}
+            />
+          </div>
+          <Button variant="outline" onClick={carregar}>Buscar</Button>
+        </div>
+
+        <div className="mt-3">
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={() => setStatusSel([])} />
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <LegendaStatus />
+        </div>
       </div>
 
       <Table
         columns={colunas}
-        data={dados}
+        data={visiveis}
         loading={loading}
         onRowClick={(row) => navigate(`/itens/${row.id}`)}
         emptyMessage="Nenhum item encontrado. Ajuste os filtros ou cadastre um novo item."
+      />
+
+      <ConfirmDialog
+        open={!!paraExcluir}
+        onClose={() => setParaExcluir(null)}
+        onConfirm={confirmarExclusao}
+        loading={excluindo}
+        title="Excluir item"
+        mensagem={`Excluir o item "${paraExcluir?.titulo ?? ''}" (${paraExcluir?.codigo ?? ''})? Esta ação não pode ser desfeita.`}
       />
     </div>
   );

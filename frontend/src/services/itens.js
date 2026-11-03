@@ -148,3 +148,12 @@ export async function criarItem(payload) {
   const { data } = await api.post('/itens', payload);
   return data;
 }
+
+export async function atualizarItem(id, payload) {
+  const { data } = await api.put(`/itens/${id}`, payload);
+  return data;
+}
+
+export async function excluirItem(id) {
+  await api.delete(`/itens/${id}`);
+}

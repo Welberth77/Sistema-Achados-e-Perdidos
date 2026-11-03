@@ -9,6 +9,7 @@ import Cadastro from '../pages/Cadastro.jsx';
 import EsqueciSenha from '../pages/EsqueciSenha.jsx';
 import Inicio from '../pages/aluno/Inicio.jsx';
 import MeusRelatos from '../pages/aluno/MeusRelatos.jsx';
+import MinhasReivindicacoes from '../pages/aluno/MinhasReivindicacoes.jsx';
 import RelatarPerda from '../pages/aluno/RelatarPerda.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
 import Usuarios from '../pages/usuarios/Usuarios.jsx';
@@ -20,6 +21,10 @@ import DetalhesItem from '../pages/itens/DetalhesItem.jsx';
 import DevolverItem from '../pages/itens/DevolverItem.jsx';
 import Relatos from '../pages/relatos/Relatos.jsx';
 import DetalhesRelato from '../pages/relatos/DetalhesRelato.jsx';
+import EditarRelato from '../pages/relatos/EditarRelato.jsx';
+import Categorias from '../pages/categorias/Categorias.jsx';
+import Solicitacoes from '../pages/solicitacoes/Solicitacoes.jsx';
+import Reivindicacoes from '../pages/reivindicacoes/Reivindicacoes.jsx';
 import Consulta from '../pages/consulta/Consulta.jsx';
 import Casos from '../pages/casos/Casos.jsx';
 import DetalhesCaso from '../pages/casos/DetalhesCaso.jsx';
@@ -47,6 +52,7 @@ export default function AppRoutes() {
       >
         <Route path="/inicio" element={<Inicio />} />
         <Route path="/meus-relatos" element={<MeusRelatos />} />
+        <Route path="/minhas-reivindicacoes" element={<MinhasReivindicacoes />} />
         <Route path="/relatar" element={<RelatarPerda />} />
       </Route>
 
@@ -59,18 +65,25 @@ export default function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/usuarios" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><Usuarios /></ProtectedRoute>} />
+        <Route path="/solicitacoes" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><Solicitacoes /></ProtectedRoute>} />
+        <Route path="/categorias" element={<Categorias />} />
 
         <Route path="/registradores" element={<Registradores />} />
-        <Route path="/registradores/novo" element={<NovoRegistrador />} />
+        <Route path="/registradores/novo" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><NovoRegistrador /></ProtectedRoute>} />
+        <Route path="/registradores/:id/editar" element={<ProtectedRoute papeis={['ADMINISTRADOR']}><NovoRegistrador /></ProtectedRoute>} />
 
         <Route path="/itens" element={<Itens />} />
         <Route path="/itens/novo" element={<NovoItem />} />
+        <Route path="/itens/:id/editar" element={<NovoItem />} />
         <Route path="/itens/:id" element={<DetalhesItem />} />
         <Route path="/itens/:id/devolver" element={<DevolverItem />} />
 
         <Route path="/relatos" element={<Relatos />} />
         <Route path="/relatos/:id" element={<DetalhesRelato />} />
+        <Route path="/relatos/:id/editar" element={<EditarRelato />} />
+
+        <Route path="/reivindicacoes" element={<Reivindicacoes />} />
 
         <Route path="/consulta" element={<Consulta />} />
 

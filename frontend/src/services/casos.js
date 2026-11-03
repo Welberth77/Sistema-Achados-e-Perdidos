@@ -106,3 +106,18 @@ export async function encerrarCaso(id) {
   const { data } = await api.patch(`/casos/${id}/encerrar`);
   return data;
 }
+
+// Cancela um caso aberto por engano. Backend: PATCH /api/casos/:id/cancelar
+export async function cancelarCaso(id, motivo) {
+  if (USE_MOCK) {
+    await delay(300);
+    const caso = mockData.find((c) => String(c.id) === String(id));
+    if (caso) {
+      caso.status = 'CANCELADO';
+      caso.data_encerramento = new Date().toISOString();
+    }
+    return { caso };
+  }
+  const { data } = await api.patch(`/casos/${id}/cancelar`, motivo ? { motivo } : {});
+  return data;
+}

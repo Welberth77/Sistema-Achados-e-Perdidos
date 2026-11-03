@@ -1,5 +1,5 @@
 // Status em MAIÚSCULAS, iguais aos CHECKs do banco (item, relato, caso, devolução).
-// Cada status mapeia para um "tom" semântico; os tons têm variante clara e escura.
+// Cada status tem um "tom" semântico e uma descrição (mostrada em tooltip e na legenda).
 const TONES = {
   blue: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/25',
   amber: 'bg-amber-50 text-amber-800 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/25',
@@ -10,31 +10,36 @@ const TONES = {
   rose: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/25',
 };
 
-const CONFIG = {
-  RECEBIDO: { label: 'Recebido', tone: 'blue' },
-  EM_CUSTODIA: { label: 'Em custódia', tone: 'amber' },
-  EM_ANALISE: { label: 'Em análise', tone: 'violet' },
-  EM_DEVOLUCAO: { label: 'Em devolução', tone: 'teal' },
-  DEVOLVIDO: { label: 'Devolvido', tone: 'green' },
-  DESCARTADO: { label: 'Descartado', tone: 'slate' },
-  ABERTO: { label: 'Aberto', tone: 'blue' },
-  CORRESPONDENCIA: { label: 'Correspondência', tone: 'violet' },
-  ENCERRADO: { label: 'Encerrado', tone: 'slate' },
-  CANCELADO: { label: 'Cancelado', tone: 'rose' },
-  AGUARDANDO_COMPROVACAO: { label: 'Aguardando comprovação', tone: 'amber' },
-  AUTORIZADO: { label: 'Autorizado', tone: 'teal' },
-  INICIADA: { label: 'Iniciada', tone: 'blue' },
-  PROPRIEDADE_COMPROVADA: { label: 'Propriedade comprovada', tone: 'teal' },
-  AUTORIZADA: { label: 'Autorizada', tone: 'teal' },
-  CONCLUIDA: { label: 'Concluída', tone: 'green' },
-  CANCELADA: { label: 'Cancelada', tone: 'rose' },
+export const STATUS_CONFIG = {
+  // Itens achados
+  RECEBIDO: { label: 'Recebido', tone: 'blue', desc: 'Recém-registrado no setor, ainda não guardado formalmente.' },
+  EM_CUSTODIA: { label: 'Em custódia', tone: 'amber', desc: 'Guardado no setor, aguardando o dono aparecer.' },
+  EM_ANALISE: { label: 'Em análise', tone: 'violet', desc: 'Em verificação (ex.: conferindo se bate com um relato).' },
+  EM_DEVOLUCAO: { label: 'Em devolução', tone: 'teal', desc: 'Em processo de entrega ao dono.' },
+  DEVOLVIDO: { label: 'Devolvido', tone: 'green', desc: 'Item já entregue ao dono.' },
+  DESCARTADO: { label: 'Descartado', tone: 'slate', desc: 'Não foi reclamado e foi descartado.' },
+  // Relatos / casos
+  ABERTO: { label: 'Aberto', tone: 'blue', desc: 'Registrado e aguardando.' },
+  CORRESPONDENCIA: { label: 'Correspondência', tone: 'violet', desc: 'Há um item achado que combina com o relato.' },
+  SUGERIDA: { label: 'Sugerida', tone: 'violet', desc: 'Sugestão automática de um item parecido.' },
+  ENCERRADO: { label: 'Encerrado', tone: 'slate', desc: 'Concluído / finalizado.' },
+  CANCELADO: { label: 'Cancelado', tone: 'rose', desc: 'Cancelado.' },
+  // Devoluções (quando exibidas)
+  AGUARDANDO_COMPROVACAO: { label: 'Aguardando comprovação', tone: 'amber', desc: 'Aguardando a comprovação de propriedade.' },
+  AUTORIZADO: { label: 'Autorizado', tone: 'teal', desc: 'Devolução autorizada.' },
+  INICIADA: { label: 'Iniciada', tone: 'blue', desc: 'Devolução iniciada.' },
+  PROPRIEDADE_COMPROVADA: { label: 'Propriedade comprovada', tone: 'teal', desc: 'Propriedade do item comprovada.' },
+  AUTORIZADA: { label: 'Autorizada', tone: 'teal', desc: 'Devolução autorizada.' },
+  CONCLUIDA: { label: 'Concluída', tone: 'green', desc: 'Devolução concluída.' },
+  CANCELADA: { label: 'Cancelada', tone: 'rose', desc: 'Devolução cancelada.' },
 };
 
 export default function StatusBadge({ status }) {
-  const c = CONFIG[status] || { label: String(status || '—'), tone: 'slate' };
+  const c = STATUS_CONFIG[status] || { label: String(status || '—'), tone: 'slate', desc: '' };
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[c.tone]}`}
+      title={c.desc || c.label}
+      className={`inline-flex cursor-default items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[c.tone]}`}
     >
       {c.label}
     </span>

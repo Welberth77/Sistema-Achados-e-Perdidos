@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { obterCaso } from '../../services/casos.js';
+import { obterCaso, encerrarCaso, cancelarCaso } from '../../services/casos.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Button from '../../components/Button.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 function Linha({ rotulo, valor, onClick }) {
   return (
@@ -34,14 +35,56 @@ export default function DetalhesCaso() {
   const [caso, setCaso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
+  const [confirmando, setConfirmando] = useState(false);
+  const [encerrando, setEncerrando] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [confirmandoCancel, setConfirmandoCancel] = useState(false);
+  const [motivoCancel, setMotivoCancel] = useState('');
+  const [erroAcao, setErroAcao] = useState('');
 
-  useEffect(() => {
+  function carregar() {
     setLoading(true);
     obterCaso(id)
       .then(setCaso)
       .catch(() => setErro('Caso não encontrado.'))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function confirmarEncerramento() {
+    setErroAcao('');
+    setEncerrando(true);
+    try {
+      await encerrarCaso(id);
+      setConfirmando(false);
+      carregar();
+    } catch (e) {
+      setErroAcao(e.response?.data?.error || 'Não foi possível encerrar o caso.');
+      setConfirmando(false);
+    } finally {
+      setEncerrando(false);
+    }
+  }
+
+  async function confirmarCancelamento() {
+    setErroAcao('');
+    setCancelando(true);
+    try {
+      await cancelarCaso(id, motivoCancel.trim() || undefined);
+      setConfirmandoCancel(false);
+      setMotivoCancel('');
+      carregar();
+    } catch (e) {
+      setErroAcao(e.response?.data?.error || 'Não foi possível cancelar o caso.');
+      setConfirmandoCancel(false);
+    } finally {
+      setCancelando(false);
+    }
+  }
 
   if (loading) return <p className="text-muted">Carregando…</p>;
   if (erro)
@@ -52,12 +95,21 @@ export default function DetalhesCaso() {
       </div>
     );
 
+  const encerravel = caso.status !== 'ENCERRADO' && caso.status !== 'CANCELADO';
+  const itemFinalizado = ['DEVOLVIDO', 'DESCARTADO'].includes(caso.item?.status);
+
   return (
     <div className="max-w-3xl">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight tabular-nums text-fg">{caso.codigo}</h1>
         <StatusBadge status={caso.status} />
       </div>
+
+      {erroAcao && (
+        <div role="alert" className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
+          {erroAcao}
+        </div>
+      )}
 
       <section className="mb-5 rounded-lg border border-border bg-surface p-5">
         <h2 className="mb-3 text-sm font-semibold text-fg">Dados do caso</h2>
@@ -81,7 +133,53 @@ export default function DetalhesCaso() {
         />
       </section>
 
-      <Button variant="outline" onClick={() => navigate('/casos')}>Voltar</Button>
+      {encerravel && !itemFinalizado && (
+        <p className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
+          Para encerrar o caso, o item vinculado precisa estar <span className="font-medium">devolvido</span> ou <span className="font-medium">descartado</span>.
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => navigate('/casos')}>Voltar</Button>
+        {encerravel && (
+          <Button onClick={() => setConfirmando(true)} disabled={!itemFinalizado}>Encerrar caso</Button>
+        )}
+        {encerravel && (
+          <Button variant="danger" onClick={() => setConfirmandoCancel(true)}>Cancelar caso</Button>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={confirmando}
+        onClose={() => setConfirmando(false)}
+        onConfirm={confirmarEncerramento}
+        loading={encerrando}
+        title="Encerrar caso"
+        confirmLabel="Encerrar"
+        mensagem={`Encerrar o caso ${caso.codigo}? Ele será marcado como concluído.`}
+      />
+
+      <ConfirmDialog
+        open={confirmandoCancel}
+        onClose={() => { setConfirmandoCancel(false); setMotivoCancel(''); }}
+        onConfirm={confirmarCancelamento}
+        loading={cancelando}
+        title="Cancelar caso"
+        confirmLabel="Cancelar caso"
+        mensagem={`Cancelar o caso ${caso.codigo}? Use isto para casos abertos por engano — o item volta a ficar livre para um novo caso.`}
+      >
+        <label className="mt-3 block text-sm">
+          <span className="mb-1 block font-medium text-fg">Motivo (opcional)</span>
+          <textarea
+            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-fg focus:border-border-strong focus:outline-none"
+            rows={2}
+            maxLength={300}
+            value={motivoCancel}
+            onChange={(e) => setMotivoCancel(e.target.value)}
+            placeholder="Ex.: caso aberto por engano."
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }

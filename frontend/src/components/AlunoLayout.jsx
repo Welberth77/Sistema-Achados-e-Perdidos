@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import { minhasReivindicacoes } from '../services/reivindicacoes.js';
 import LogoutButton from './LogoutButton.jsx';
 
 function IconeSol() {
@@ -23,12 +25,33 @@ const links = [
   { to: '/inicio', label: 'Procurar achados' },
   { to: '/meus-relatos', label: 'Meus relatos' },
   { to: '/relatar', label: 'Relatar perda' },
+  { to: '/minhas-reivindicacoes', label: 'Minhas solicitações' },
 ];
+
+function Badge({ to, aviso }) {
+  if (to !== '/minhas-reivindicacoes' || !aviso) return null;
+  return <span className="ml-1 inline-block h-2 w-2 rounded-full bg-rose-400 align-middle" aria-hidden="true" />;
+}
 
 export default function AlunoLayout() {
   const { usuario } = useAuth();
   const { escuro, alternar } = useTheme();
   const navigate = useNavigate();
+  const [aviso, setAviso] = useState(false);
+
+  // Aviso (bolinha) quando há reivindicação já decidida que o aluno ainda não viu.
+  useEffect(() => {
+    let vivo = true;
+    minhasReivindicacoes()
+      .then((lista) => {
+        if (!vivo || !Array.isArray(lista)) return;
+        let vistas = [];
+        try { vistas = JSON.parse(localStorage.getItem('reivind_vistas') || '[]'); } catch { vistas = []; }
+        setAviso(lista.some((r) => r.status !== 'PENDENTE' && !vistas.includes(r.id)));
+      })
+      .catch(() => {});
+    return () => { vivo = false; };
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
@@ -54,6 +77,7 @@ export default function AlunoLayout() {
                 }
               >
                 {l.label}
+                <Badge to={l.to} aviso={aviso} />
               </NavLink>
             ))}
           </nav>
@@ -72,16 +96,17 @@ export default function AlunoLayout() {
           </div>
         </div>
         {/* nav em telas pequenas */}
-        <nav aria-label="Navegação" className="flex gap-1 border-t border-white/10 px-4 py-2 sm:hidden">
+        <nav aria-label="Navegação" className="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 sm:hidden">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
-                `rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-white/20 text-white' : 'text-white/80'}`
+                `whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-white/20 text-white' : 'text-white/80'}`
               }
             >
               {l.label}
+              <Badge to={l.to} aviso={aviso} />
             </NavLink>
           ))}
         </nav>

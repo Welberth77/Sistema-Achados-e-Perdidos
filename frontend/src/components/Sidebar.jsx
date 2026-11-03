@@ -4,8 +4,10 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 const base = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/registradores', label: 'Registradores' },
+  { to: '/categorias', label: 'Categorias' },
   { to: '/itens', label: 'Itens' },
   { to: '/relatos', label: 'Relatos' },
+  { to: '/reivindicacoes', label: 'Reivindicações' },
   { to: '/consulta', label: 'Consulta' },
   { to: '/casos', label: 'Casos' },
 ];
@@ -13,7 +15,9 @@ const base = [
 export default function Sidebar() {
   const { usuario } = useAuth();
   const links =
-    usuario?.papel === 'ADMINISTRADOR' ? [...base, { to: '/usuarios', label: 'Usuários' }] : base;
+    usuario?.papel === 'ADMINISTRADOR'
+      ? [...base, { to: '/solicitacoes', label: 'Solicitações' }, { to: '/usuarios', label: 'Usuários' }]
+      : base;
 
   return (
     <aside className="shrink-0 border-b border-border bg-surface md:w-60 md:border-b-0 md:border-r">

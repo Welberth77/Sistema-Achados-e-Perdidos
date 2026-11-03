@@ -25,3 +25,17 @@ export async function listarCategorias() {
   // o backend devolve { data, meta }; a lista fica em data.data
   return data.data ?? data;
 }
+
+export async function criarCategoria(payload) {
+  const { data } = await api.post('/categorias', payload);
+  return data;
+}
+
+export async function atualizarCategoria(id, payload) {
+  const { data } = await api.put(`/categorias/${id}`, payload);
+  return data;
+}
+
+export async function excluirCategoria(id) {
+  await api.delete(`/categorias/${id}`);
+}

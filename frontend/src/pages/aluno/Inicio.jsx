@@ -1,27 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listarAchados } from '../../services/achados.js';
+import { meusRelatos } from '../../services/meusRelatos.js';
 import { CATEGORIAS_PUBLICAS } from '../../services/publico.js';
 import Input from '../../components/Input.jsx';
 import Select from '../../components/Select.jsx';
 import Button from '../../components/Button.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import Modal from '../../components/Modal.jsx';
+import ReivindicarItem from '../../components/ReivindicarItem.jsx';
+import FiltroStatus from '../../components/FiltroStatus.jsx';
+import LegendaStatus from '../../components/LegendaStatus.jsx';
+import { SETOR_NOME, SETOR_LOCAL } from '../../config/setor.js';
 
 const POR_PAGINA = 12;
 
-const STATUS_OPCOES = [
-  { value: '', label: 'Todos os status' },
+// Situações que o aluno pode ver (itens devolvidos/descartados não aparecem aqui).
+const STATUS = [
   { value: 'RECEBIDO', label: 'Recebido' },
   { value: 'EM_CUSTODIA', label: 'Em custódia' },
   { value: 'EM_ANALISE', label: 'Em análise' },
   { value: 'EM_DEVOLUCAO', label: 'Em devolução' },
-  { value: 'DEVOLVIDO', label: 'Devolvido' },
 ];
 
 function dataCurta(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR');
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
 }
 
 function IconeCards() {
@@ -56,9 +60,10 @@ export default function Inicio() {
   const [erro, setErro] = useState('');
   const [q, setQ] = useState('');
   const [categoria, setCategoria] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusSel, setStatusSel] = useState([]); // múltipla seleção de situações
   const [pagina, setPagina] = useState(1);
-  const [detalhe, setDetalhe] = useState(null); // item selecionado para o modal
+  const [detalhe, setDetalhe] = useState(null);
+  const [relatosAluno, setRelatosAluno] = useState([]); // item selecionado para o modal
   const [vista, setVista] = useState(() => {
     try {
       return localStorage.getItem('achados_vista') === 'lista' ? 'lista' : 'cards';
@@ -79,7 +84,8 @@ export default function Inicio() {
     setLoading(true);
     setErro('');
     try {
-      setItens(await listarAchados({ q, categoria, status }));
+      const achados = await listarAchados({ q, categoria });
+      setItens(achados.filter((i) => i.status !== 'DEVOLVIDO' && i.status !== 'DESCARTADO'));
       setPagina(1);
     } catch {
       setErro('Não foi possível carregar os itens.');
@@ -90,18 +96,35 @@ export default function Inicio() {
 
   useEffect(() => {
     carregar();
+    meusRelatos().then((r) => setRelatosAluno(Array.isArray(r) ? r : [])).catch(() => setRelatosAluno([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function toggleStatus(v) {
+    setStatusSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+    setPagina(1);
+  }
+
+  function limparStatus() {
+    setStatusSel([]);
+    setPagina(1);
+  }
 
   const catOptions = [
     { value: '', label: 'Todas as categorias' },
     ...CATEGORIAS_PUBLICAS.map((c) => ({ value: c, label: c })),
   ];
 
-  const totalPaginas = Math.max(1, Math.ceil(itens.length / POR_PAGINA));
+  // Filtro de situação aplicado no cliente (igual às telas de admin/servidor).
+  const itensFiltrados = useMemo(
+    () => (statusSel.length ? itens.filter((i) => statusSel.includes(i.status)) : itens),
+    [itens, statusSel]
+  );
+
+  const totalPaginas = Math.max(1, Math.ceil(itensFiltrados.length / POR_PAGINA));
   const paginaSegura = Math.min(pagina, totalPaginas);
   const inicio = (paginaSegura - 1) * POR_PAGINA;
-  const visiveis = itens.slice(inicio, inicio + POR_PAGINA);
+  const visiveis = itensFiltrados.slice(inicio, inicio + POR_PAGINA);
 
   const btnVista = (ativa) =>
     `grid h-8 w-8 place-items-center rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -118,20 +141,37 @@ export default function Inicio() {
         </p>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="min-w-56 flex-1">
-          <Input
-            label="Pesquisar"
-            placeholder="Ex.: mochila, celular, chave…"
-            value={q}
-            maxLength={120}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && carregar()}
-          />
+      <div className="mb-5 flex items-start gap-3 rounded-lg border border-primary/40 bg-primary-soft p-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 shrink-0 text-link">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+        </svg>
+        <p className="text-sm text-fg">
+          <span className="font-medium">Retirada de itens:</span> {SETOR_NOME} — {SETOR_LOCAL}. Leve um documento de identificação.
+        </p>
+      </div>
+
+      <div className="mb-5 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1">
+            <Input
+              label="Pesquisar"
+              placeholder="Ex.: mochila, celular, chave…"
+              value={q}
+              maxLength={120}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregar()}
+            />
+          </div>
+          <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
+          <Button variant="outline" onClick={carregar}>Buscar</Button>
         </div>
-        <Select label="Categoria" options={catOptions} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
-        <Select label="Status" options={STATUS_OPCOES} value={status} onChange={(e) => setStatus(e.target.value)} />
-        <Button variant="outline" onClick={carregar}>Buscar</Button>
+
+        <div className="mt-4">
+          <FiltroStatus options={STATUS} value={statusSel} onToggle={toggleStatus} onClear={limparStatus} />
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <LegendaStatus statuses={['RECEBIDO', 'EM_CUSTODIA', 'EM_ANALISE', 'EM_DEVOLUCAO']} />
+        </div>
       </div>
 
       {erro && (
@@ -144,7 +184,7 @@ export default function Inicio() {
       {!erro && (
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="text-sm text-muted" aria-live="polite">
-            {loading ? 'Carregando…' : `${itens.length} ${itens.length === 1 ? 'item' : 'itens'}`}
+            {loading ? 'Carregando…' : `${itensFiltrados.length} ${itensFiltrados.length === 1 ? 'item' : 'itens'}`}
           </p>
           <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-surface p-0.5" role="group" aria-label="Modo de visualização">
             <button type="button" className={btnVista(vista === 'cards')} aria-label="Ver em cards" aria-pressed={vista === 'cards'} onClick={() => setVista('cards')}>
@@ -157,27 +197,28 @@ export default function Inicio() {
         </div>
       )}
 
-      {loading ? null : itens.length === 0 ? (
+      {loading ? null : itensFiltrados.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
           Nenhum item encontrado. Tente outra busca ou registre um relato de perda.
         </div>
       ) : vista === 'cards' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visiveis.map((it) => (
-            <article key={it.id} className="flex flex-col rounded-lg border border-border bg-surface p-4">
+            <article
+              key={it.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setDetalhe(it)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetalhe(it); } }}
+              className="flex cursor-pointer flex-col rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
                   {it.categoria?.nome || 'Sem categoria'}
                 </span>
                 <StatusBadge status={it.status} />
               </div>
-              <button
-                type="button"
-                className="text-left font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
-                onClick={() => setDetalhe(it)}
-              >
-                {it.titulo}
-              </button>
+              <p className="font-medium text-fg">{it.titulo}</p>
               <dl className="mt-2 space-y-1 text-sm">
                 <div className="flex gap-2">
                   <dt className="w-24 shrink-0 text-muted">Local</dt>
@@ -194,17 +235,18 @@ export default function Inicio() {
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
           {visiveis.map((it) => (
-            <li key={it.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
+            <li
+              key={it.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setDetalhe(it)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetalhe(it); } }}
+              className="flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition-colors hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            >
               <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-link">
                 {it.categoria?.nome || 'Sem categoria'}
               </span>
-              <button
-                type="button"
-                className="font-medium text-fg underline-offset-2 hover:underline focus:outline-none focus-visible:underline"
-                onClick={() => setDetalhe(it)}
-              >
-                {it.titulo}
-              </button>
+              <span className="font-medium text-fg">{it.titulo}</span>
               <span className="text-sm text-muted">{it.local_encontrado || '—'}</span>
               <span className="text-sm tabular-nums text-muted">{dataCurta(it.data_encontrado)}</span>
               <span className="ml-auto">
@@ -252,6 +294,10 @@ export default function Inicio() {
             <LinhaDetalhe rotulo="Marca" valor={detalhe.marca} />
             <LinhaDetalhe rotulo="Local" valor={detalhe.local_encontrado} />
             <LinhaDetalhe rotulo="Encontrado em" valor={dataCurta(detalhe.data_encontrado)} />
+            <LinhaDetalhe rotulo="Retirada" valor={`${SETOR_NOME} — ${SETOR_LOCAL}`} />
+            {detalhe.status !== 'DEVOLVIDO' && detalhe.status !== 'DESCARTADO' && (
+              <ReivindicarItem item={detalhe} relatos={relatosAluno} />
+            )}
             <p className="mt-4 text-xs text-muted">
               Para retirar, procure o setor responsável levando um documento de identificação.
             </p>

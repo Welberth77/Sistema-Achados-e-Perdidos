@@ -39,6 +39,32 @@ export async function alterarPapel(req, res) {
     if (!rows.length) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
+    // Servidores/admins viram também registradores (pessoal do balcão), p/ evitar confusão.
+    if (['SERVIDOR', 'ADMINISTRADOR'].includes(papel) && rows[0].email) {
+      const ex = await pool.query('SELECT id FROM registradores WHERE email = $1 LIMIT 1', [rows[0].email]);
+      if (ex.rows.length) {
+        // já existe (ex.: foi dono/recebedor) -> garante que o vínculo vire SERVIDOR
+        await pool.query(
+          `UPDATE registradores SET vinculo = 'SERVIDOR', nome = $1, atualizado_em = now() WHERE id = $2`,
+          [rows[0].nome, ex.rows[0].id]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO registradores (nome, vinculo, email) VALUES ($1, 'SERVIDOR', $2)`,
+          [rows[0].nome, rows[0].email]
+        );
+      }
+    }
+    // Rebaixado para comum: deixa de ser registrador (se não tiver histórico vinculado).
+    if (papel === 'USUARIO' && rows[0].email) {
+      await pool.query(
+        `DELETE FROM registradores r
+          WHERE r.email = $1 AND r.vinculo = 'SERVIDOR'
+            AND NOT EXISTS (SELECT 1 FROM itens_achados i WHERE i.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM relatos_perda rp WHERE rp.registrador_id = r.id)`,
+        [rows[0].email]
+      );
+    }
     return res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao alterar perfil:', err);
@@ -55,13 +81,39 @@ export async function excluirUsuario(req, res) {
   }
 
   try {
-    const { rowCount } = await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
-    if (!rowCount) {
+    const del = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING email', [id]);
+    if (!del.rowCount) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    // Remove também o registrador correspondente (mesmo e-mail), desde que não
+    // haja itens, relatos ou devoluções vinculados a ele (preserva o histórico).
+    const email = del.rows[0].email;
+    if (email) {
+      await pool.query(
+        `DELETE FROM registradores r
+          WHERE r.email = $1
+            AND NOT EXISTS (SELECT 1 FROM itens_achados i WHERE i.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM relatos_perda rp WHERE rp.registrador_id = r.id)
+            AND NOT EXISTS (SELECT 1 FROM devolucoes d WHERE d.recebedor_id = r.id)`,
+        [email]
+      );
     }
     return res.status(204).end();
   } catch (err) {
     console.error('Erro ao excluir usuário:', err);
     return res.status(500).json({ error: 'Erro ao excluir o usuário.' });
+  }
+}
+
+// GET /api/usuarios/alunos — usuários comuns (para escolher o dono na devolução). Staff.
+export async function listarAlunos(req, res) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, nome, email FROM usuarios WHERE papel = 'USUARIO' AND ativo = TRUE ORDER BY nome`
+    );
+    return res.json(rows);
+  } catch (err) {
+    console.error('Erro ao listar alunos:', err);
+    return res.status(500).json({ error: 'Erro ao listar usuários.' });
   }
 }

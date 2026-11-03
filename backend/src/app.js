@@ -12,6 +12,8 @@ import relatosRouter from './routes/relatosRoutes.js';
 import itensRouter from './routes/itensRoutes.js';
 import registradoresRouter from './routes/registradoresRoutes.js';
 import categoriasRouter from './routes/categoriasRoutes.js';
+import solicitacoesRouter from './routes/solicitacoesRoutes.js';
+import reivindicacoesRouter from './routes/reivindicacoesRoutes.js';
 import publicoRouter from './routes/publicoRoutes.js';
 
 const app = express();
@@ -34,6 +36,8 @@ app.use('/api/relatos', relatosRouter);
 app.use('/api/itens', itensRouter);
 app.use('/api/registradores', registradoresRouter);
 app.use('/api/categorias', categoriasRouter);
+app.use('/api/solicitacoes', solicitacoesRouter);
+app.use('/api/reivindicacoes', reivindicacoesRouter);
 
 // Rota não encontrada (404)
 app.use((req, res) => {

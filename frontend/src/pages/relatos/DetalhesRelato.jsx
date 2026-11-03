@@ -4,6 +4,7 @@ import { obterRelato, listarCorrespondenciasRelato } from '../../services/relato
 import { criarCaso } from '../../services/casos.js';
 import { listarItens } from '../../services/itens.js';
 import StatusBadge from '../../components/StatusBadge.jsx';
+import { dataBR } from '../../utils/formato.js';
 import Table from '../../components/Table.jsx';
 import Button from '../../components/Button.jsx';
 import Modal from '../../components/Modal.jsx';
@@ -122,7 +123,7 @@ export default function DetalhesRelato() {
         <Linha rotulo="Cor" valor={relato.cor} />
         <Linha rotulo="Marca" valor={relato.marca} />
         <Linha rotulo="Local da perda" valor={relato.local_perda} />
-        <Linha rotulo="Data da perda" valor={relato.data_perda} />
+        <Linha rotulo="Data da perda" valor={dataBR(relato.data_perda)} />
         <Linha rotulo="Registrador" valor={relato.registrador?.nome} />
       </section>
 
